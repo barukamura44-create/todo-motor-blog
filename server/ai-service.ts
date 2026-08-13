@@ -1,4 +1,15 @@
-import { ENV } from './_core/env';
+// ─── Google AI Studio — Gemma / Gemini Provider ───────────────────────────
+// Compatível com: gemma-3-27b-it, gemma-3-12b-it, gemini-2.0-flash, etc.
+// Docs: https://ai.google.dev/api/generate-content
+
+const GOOGLE_AI_API_KEY =
+  process.env.GOOGLE_AI_API_KEY ?? '';
+
+const GOOGLE_AI_BASE =
+  'https://generativelanguage.googleapis.com/v1beta';
+
+// Modelo: Gemma 4 31B (Google DeepMind) — via Google AI Studio
+const AI_MODEL = 'gemma-4-31b-it';
 
 const SYSTEM_PROMPT = `Você é um redator especializado em notícias do setor de transportes pesados, máquinas e equipamentos.
 Seu tom é direto, técnico e apaixonado pelo universo motor.
@@ -24,111 +35,145 @@ interface GeneratedContent {
   excerpt: string;
 }
 
-export async function generateContentFromUrl(url: string): Promise<GeneratedContent> {
+// ─── Chamada à API do Google AI Studio ────────────────────────────────────
+async function callGoogleAI(userPrompt: string): Promise<string> {
+  if (!GOOGLE_AI_API_KEY) {
+    throw new Error(
+      'GOOGLE_AI_API_KEY não configurada. Adicione ao arquivo .env.local'
+    );
+  }
+
+  const url = `${GOOGLE_AI_BASE}/models/${AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
+
+  const body = {
+    system_instruction: {
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: userPrompt }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1500,
+      topP: 0.95,
+    },
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    console.error('[AI Service] Google AI error:', response.status, err);
+    throw new Error(
+      `Google AI API error ${response.status}: ${JSON.stringify(err)}`
+    );
+  }
+
+  const data = await response.json();
+
+  // Estrutura da resposta: data.candidates[0].content.parts[0].text
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!text) {
+    console.error('[AI Service] Resposta inesperada:', JSON.stringify(data));
+    throw new Error('Resposta inválida da API do Google AI');
+  }
+
+  return text;
+}
+
+// ─── Funções públicas ──────────────────────────────────────────────────────
+
+export async function generateContentFromUrl(
+  url: string
+): Promise<GeneratedContent> {
   try {
-    // Fetch the content from the URL
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
     });
-    
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+      throw new Error(`Falha ao buscar URL: ${response.statusText}`);
     }
 
     const html = await response.text();
-    
-    // Extract text content from HTML (simple extraction)
     const textContent = extractTextFromHtml(html);
-    
+
     if (!textContent || textContent.length < 50) {
-      throw new Error('Could not extract sufficient content from URL');
+      throw new Error('Não foi possível extrair conteúdo suficiente da URL');
     }
 
     return generateContentFromText(textContent);
   } catch (error) {
-    throw new Error(`Failed to process URL: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Falha ao processar URL: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
-export async function generateContentFromText(text: string): Promise<GeneratedContent> {
+export async function generateContentFromText(
+  text: string
+): Promise<GeneratedContent> {
   if (!text || text.length < 50) {
-    throw new Error('Text must be at least 50 characters long');
+    throw new Error('O texto deve ter pelo menos 50 caracteres');
   }
 
   try {
-    const response = await fetch(`${ENV.forgeApiUrl}/llm/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${ENV.forgeApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `Reescreva este conteúdo sobre transportes e máquinas pesadas:\n\n${text}` },
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('[AI Service] LLM API error:', response.status, errorData);
-      throw new Error(`LLM API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response from LLM API');
-    }
-
-    const generatedText = data.choices[0].message.content;
+    const userPrompt = `Reescreva este conteúdo sobre transportes e máquinas pesadas:\n\n${text.substring(0, 4000)}`;
+    const generatedText = await callGoogleAI(userPrompt);
     return parseGeneratedContent(generatedText);
   } catch (error) {
-    throw new Error(`Failed to generate content: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Falha ao gerar conteúdo: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
 function parseGeneratedContent(text: string): GeneratedContent {
   const titleMatch = text.match(/TÍTULO:\s*(.+?)(?:\n|$)/i);
-  const resumoMatch = text.match(/RESUMO:\s*(.+?)(?:\n|$)/i);
-  
+  const resumoMatch = text.match(/RESUMO:\s*([\s\S]+?)(?:\n\n|$)/i);
+
   const title = titleMatch ? titleMatch[1].trim() : 'Notícia do Universo Motor';
-  const excerpt = resumoMatch ? resumoMatch[1].trim() : 'Confira esta importante notícia do setor de transportes pesados.';
-  
-  // Remove TÍTULO and RESUMO markers from content
+  const excerpt = resumoMatch
+    ? resumoMatch[1].trim()
+    : 'Confira esta importante notícia do setor de transportes pesados.';
+
   let content = text
     .replace(/TÍTULO:\s*.+?(?:\n|$)/i, '')
-    .replace(/RESUMO:\s*.+?(?:\n|$)/i, '')
+    .replace(/RESUMO:\s*[\s\S]+?(?:\n\n|$)/i, '')
     .trim();
 
-  // Ensure content is not too short
   if (content.length < 100) {
     content = text;
   }
 
   return {
-    title: title.substring(0, 60), // Ensure max 60 chars
-    content: content.substring(0, 2000), // Limit content length
-    excerpt: excerpt.substring(0, 200), // Limit excerpt length
+    title: title.substring(0, 60),
+    content: content.substring(0, 2000),
+    excerpt: excerpt.substring(0, 200),
   };
 }
 
 function extractTextFromHtml(html: string): string {
-  // Remove script and style elements
   let text = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
 
-  // Remove HTML tags
   text = text.replace(/<[^>]+>/g, ' ');
 
-  // Decode HTML entities
   text = text
     .replace(/&nbsp;/g, ' ')
     .replace(/&quot;/g, '"')
@@ -137,8 +182,5 @@ function extractTextFromHtml(html: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
-  // Remove extra whitespace
-  text = text.replace(/\s+/g, ' ').trim();
-
-  return text;
+  return text.replace(/\s+/g, ' ').trim();
 }
