@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1781380104031,
+      "tag": "0000_light_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1781382934094,
+      "tag": "0001_careful_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786139374950,
+      "tag": "0002_rich_gravity",
+      "breakpoints": true
+    }
+  ]
+}
