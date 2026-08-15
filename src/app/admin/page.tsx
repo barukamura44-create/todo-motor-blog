@@ -149,6 +149,17 @@ export default function AdminPage() {
   const [agentErrors, setAgentErrors] = useState<string[]>([]);
   const [expandedReels, setExpandedReels] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetch('/api/posts?status=all')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.posts) && data.posts.length > 0) {
+          setPosts(data.posts);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   function showNotification(text: string, type: 'success' | 'info' = 'success') {
     setNotifyMsg({ text, type });
     setTimeout(() => setNotifyMsg(null), 4000);
@@ -186,36 +197,33 @@ export default function AdminPage() {
     setIsFormOpen(true);
   }
 
-  function handleSavePost(e: React.FormEvent) {
+  async function handleSavePost(e: React.FormEvent) {
     e.preventDefault();
     const slug = postForm.slug || postForm.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    const newPost: Post = {
+      id: editingPostId || Date.now(),
+      ...postForm,
+      slug,
+      publishedAt: postForm.status === 'published' ? new Date() : null,
+      createdAt: new Date(),
+    };
 
-    if (editingPostId) {
-      setPosts(prev => prev.map(p => p.id === editingPostId ? {
-        ...p,
-        ...postForm,
-        slug,
-        publishedAt: postForm.status === 'published' ? new Date() : p.publishedAt,
-        updatedAt: new Date(),
-      } : p));
-      showNotification('Notícia atualizada com sucesso!');
-    } else {
-      const newPost: Post = {
-        id: Date.now(),
-        ...postForm,
-        slug,
-        publishedAt: postForm.status === 'published' ? new Date() : null,
-        createdAt: new Date(),
-      };
-      setPosts(prev => [newPost, ...prev]);
-      showNotification('Notícia criada com sucesso!');
-    }
+    setPosts(prev => editingPostId ? prev.map(p => p.id === editingPostId ? newPost : p) : [newPost, ...prev]);
+
+    await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPost),
+    }).catch(() => {});
+
+    showNotification(editingPostId ? 'Notícia atualizada com sucesso!' : 'Notícia criada com sucesso!');
     setIsFormOpen(false);
   }
 
-  function handleDeletePost(id: number) {
+  async function handleDeletePost(id: number) {
     if (confirm('Tem certeza que deseja excluir esta notícia?')) {
       setPosts(prev => prev.filter(p => p.id !== id));
+      await fetch(`/api/posts?id=${id}`, { method: 'DELETE' }).catch(() => {});
       showNotification('Notícia excluída.', 'info');
     }
   }
@@ -870,7 +878,7 @@ export default function AdminPage() {
                         <button
                           className="btn-yellow"
                           style={{ padding: '8px 20px', fontSize: 13 }}
-                          onClick={() => {
+                          onClick={async () => {
                             const newPost: Post = {
                               id: Date.now(),
                               title: article.rewrittenTitle,
@@ -878,16 +886,25 @@ export default function AdminPage() {
                               content: article.rewrittenContent,
                               excerpt: article.excerpt,
                               categoryId: INITIAL_CATEGORIES.find(c => c.slug === article.categorySlug)?.id || 1,
-                              coverImage: article.suggestedImageUrl || '',
+                              coverImage: article.suggestedImageUrl || '/category-veiculos.jpg',
                               status: 'published',
                               sourceUrl: article.originalUrl,
                               tags: (article.hashtags || []).join(', '),
                               publishedAt: new Date(),
                               createdAt: new Date(),
                             };
+
                             setPosts(prev => [newPost, ...prev]);
                             setAgentQueue(q => q.filter(a => a.originalUrl !== article.originalUrl));
-                            showNotification(`✅ "${article.rewrittenTitle.substring(0, 40)}..." publicado!`);
+
+                            // Sync with shared /api/posts store for instant display on homepage
+                            await fetch('/api/posts', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(newPost),
+                            }).catch(() => {});
+
+                            showNotification(`✅ "${article.rewrittenTitle.substring(0, 40)}..." publicado na página principal!`);
                           }}
                         >
                           ✅ Aprovar e Publicar

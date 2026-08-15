@@ -562,7 +562,7 @@ function Footer({ onLeadClick }: { onLeadClick: () => void }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const [posts] = useState<Post[]>(DEMO_POSTS);
+  const [posts, setPosts] = useState<Post[]>(DEMO_POSTS);
   const [categories] = useState<Category[]>(DEMO_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -571,7 +571,17 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const bannerInsertedAt = 3; // Insert lead banner after N posts
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.posts) && data.posts.length > 0) {
+          setPosts(data.posts);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Exit intent detection
   useEffect(() => {
