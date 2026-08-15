@@ -89,10 +89,10 @@ CONTEÚDO: ${articleContent.substring(0, 1500)}
 Gere o roteiro completo seguindo o formato exato especificado.`;
 
   const raw = await callGemma4(prompt);
-  return parseReelsScript(raw);
+  return parseReelsScript(raw, articleTitle);
 }
 
-function parseReelsScript(raw: string): ReelsScript {
+function parseReelsScript(raw: string, articleTitle: string): ReelsScript {
   const get = (key: string) => {
     const match = raw.match(new RegExp(`${key}:\\s*(.+?)(?:\\n|$)`, 'i'));
     return match ? match[1].trim() : '';

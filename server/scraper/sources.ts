@@ -1,11 +1,6 @@
 /**
  * Pre-configured RSS sources organized by category.
  * Each source is mapped to a category slug and includes keywords for relevance filtering.
- *
- * HOW TO ADD SOURCES:
- *  1. Find the category slug in the categories table
- *  2. Add a new entry in the SOURCES array below
- *  3. Provide keywords to filter irrelevant items from generic feeds
  */
 
 export interface SourceConfig {
@@ -19,41 +14,41 @@ export interface SourceConfig {
 export const SOURCES: SourceConfig[] = [
   // ─── VEÍCULOS / LANÇAMENTOS ───────────────────────────────────────────────
   {
-    name: 'ANFAVEA - Notícias',
-    url: 'https://anfavea.com.br/feed',
-    categorySlug: 'lancamentos',
-    type: 'rss',
-    keywords: ['veículo', 'carro', 'automóvel', 'lançamento', 'fabricante', 'montadora'],
-  },
-  {
-    name: 'Webmotors Notícias',
-    url: 'https://www.webmotors.com.br/rss/noticias',
+    name: 'Motor1 Brasil',
+    url: 'https://br.motor1.com/rss/news/all/',
     categorySlug: 'veiculos',
     type: 'rss',
-    keywords: ['lançamento', 'carro', 'picape', 'suv', 'caminhão', 'veículo'],
+    keywords: ['carro', 'picape', 'suv', 'veículo', 'lançamento', 'teste', 'motor'],
   },
   {
-    name: 'Motor1 Brasil',
-    url: 'https://br.motor1.com/rss/',
+    name: 'Notícias Automotivas',
+    url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'lancamentos',
     type: 'rss',
-    keywords: ['lançamento', 'novo', 'estreia', 'brasil'],
+    keywords: ['lançamento', 'novo', 'carro', 'picape', 'suv', 'brasil', 'preço'],
+  },
+  {
+    name: 'Autoesporte',
+    url: 'https://autoesporte.globo.com/rss/autoesporte/',
+    categorySlug: 'veiculos',
+    type: 'rss',
+    keywords: ['carro', 'veículo', 'suv', 'picape', 'lançamento', 'elétrico'],
   },
 
   // ─── TRANSPORTES PESADOS ──────────────────────────────────────────────────
   {
-    name: 'Fenabrave',
-    url: 'https://fenabrave.org.br/feed/',
-    categorySlug: 'transportes-pesados',
-    type: 'rss',
-    keywords: ['caminhão', 'ônibus', 'semirreboque', 'transportes', 'carga', 'frotas'],
-  },
-  {
-    name: 'Transporte Moderno RSS',
+    name: 'Transporte Moderno',
     url: 'https://www.transportemoderno.com.br/feed/',
     categorySlug: 'transportes-pesados',
     type: 'rss',
-    keywords: ['caminhão', 'frota', 'logística', 'carroceria', 'transporte'],
+    keywords: ['caminhão', 'frota', 'logística', 'transporte', 'carga', 'semirreboque'],
+  },
+  {
+    name: 'Motor1 Comercial/Pesados',
+    url: 'https://br.motor1.com/rss/category/comerciais-leves-e-pesados/',
+    categorySlug: 'transportes-pesados',
+    type: 'rss',
+    keywords: ['caminhão', 'van', 'furgão', 'pesados', 'scania', 'volvo', 'mercedes'],
   },
 
   // ─── MÁQUINAS AGRÍCOLAS ───────────────────────────────────────────────────
@@ -62,21 +57,14 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://www.canalrural.com.br/feed/',
     categorySlug: 'agricola',
     type: 'rss',
-    keywords: ['máquina', 'agrícola', 'colheitadeira', 'trator', 'plantadeira', 'pulverizador', 'New Holland', 'John Deere', 'Case'],
+    keywords: ['máquina', 'agrícola', 'colheitadeira', 'trator', 'plantadeira', 'pulverizador', 'New Holland', 'John Deere', 'Case', 'campo', 'agro'],
   },
   {
     name: 'AgroLink',
     url: 'https://www.agrolink.com.br/rss/noticias.aspx',
     categorySlug: 'agricola',
     type: 'rss',
-    keywords: ['trator', 'máquina agrícola', 'colheita', 'equipamento', 'implemento'],
-  },
-  {
-    name: 'Globo Rural',
-    url: 'https://revistagloborural.globo.com/rss',
-    categorySlug: 'agricola',
-    type: 'rss',
-    keywords: ['trator', 'colheitadeira', 'máquina', 'equipamento agrícola', 'tecnologia no campo'],
+    keywords: ['trator', 'máquina agrícola', 'colheita', 'equipamento', 'implemento', 'agronegócio'],
   },
 
   // ─── TERRAPLENAGEM ────────────────────────────────────────────────────────
@@ -85,63 +73,54 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://www.maquinasemercado.com.br/feed/',
     categorySlug: 'terraplenagem',
     type: 'rss',
-    keywords: ['escavadeira', 'retroescavadeira', 'motoniveladora', 'terraplenagem', 'compactador', 'caterpillar', 'komatsu', 'volvo CE'],
+    keywords: ['escavadeira', 'retroescavadeira', 'motoniveladora', 'terraplenagem', 'compactador', 'caterpillar', 'komatsu', 'volvo CE', 'obra'],
+  },
+  {
+    name: 'Canal Rural Infra',
+    url: 'https://www.canalrural.com.br/feed/',
+    categorySlug: 'terraplenagem',
+    type: 'rss',
+    keywords: ['máquina', 'equipamento', 'obra', 'estrutura', 'terraplenagem'],
   },
 
-  // ─── NÁUTICA / LANCHAS ────────────────────────────────────────────────────
+  // ─── NÁUTICA / BARCOS / JET SKI ──────────────────────────────────────────
   {
     name: 'Náutica Online',
-    url: 'https://nauticaonline.uol.com.br/feed/',
-    categorySlug: 'nautica',
+    url: 'https://nautica.com.br/feed/',
+    categorySlug: 'barcos',
     type: 'rss',
-    keywords: ['lancha', 'barco', 'veleiro', 'iate', 'náutica', 'marinha', 'embarcação'],
-  },
-  {
-    name: 'Boat International (PT)',
-    url: 'https://www.boatinternational.com/feed',
-    categorySlug: 'nautica',
-    type: 'rss',
-    keywords: ['lancha', 'barco', 'iate', 'lançamento'],
+    keywords: ['lancha', 'barco', 'veleiro', 'iate', 'náutica', 'marinha', 'embarcação', 'jetski', 'moto aquática'],
   },
 
-  // ─── JET SKI ─────────────────────────────────────────────────────────────
+  // ─── AERONAVES / DRONES / HELICÓPTEROS ──────────────────────────────────
   {
-    name: 'Moto Aquática Brasil',
-    url: 'https://motoaquatica.com.br/feed/',
-    categorySlug: 'jetski',
-    type: 'rss',
-    keywords: ['jet ski', 'moto aquática', 'kawasaki', 'sea-doo', 'yamaha waverunner', 'esporte aquático'],
-  },
-
-  // ─── AERONAVES / DRONES ───────────────────────────────────────────────────
-  {
-    name: 'ANAC Notícias',
-    url: 'https://www.anac.gov.br/Rss',
+    name: 'Aeroin Notícias',
+    url: 'https://aeroin.net/feed/',
     categorySlug: 'aeronaves',
     type: 'rss',
-    keywords: ['aeronave', 'avião', 'piloto', 'aviação geral', 'homologação'],
+    keywords: ['aeronave', 'avião', 'aviação', 'helicóptero', 'drone', 'embraer', 'boeing', 'airbus', 'piloto'],
   },
   {
-    name: 'Airway',
+    name: 'Airway Aviação',
     url: 'https://www.airway.com.br/feed/',
-    categorySlug: 'aeronaves',
+    categorySlug: 'helicopteros',
     type: 'rss',
     keywords: ['aviação', 'aeronave', 'airshow', 'helicóptero', 'drone', 'avião'],
   },
   {
-    name: 'Mundo Drone',
-    url: 'https://mundodrone.com.br/feed/',
+    name: 'Aeroin Drones',
+    url: 'https://aeroin.net/feed/',
     categorySlug: 'drones',
     type: 'rss',
-    keywords: ['drone', 'VANT', 'UAS', 'DJI', 'RPAS', 'regulação', 'fotografia aérea'],
+    keywords: ['drone', 'VANT', 'UAS', 'DJI', 'tecnologia', 'aérea', 'aeronave'],
   },
 
-  // ─── EVENTOS ─────────────────────────────────────────────────────────────
+  // ─── EVENTOS / LANÇAMENTOS ──────────────────────────────────────────────
   {
-    name: 'Agrishow RSS',
-    url: 'https://agrishow.com.br/feed/',
+    name: 'Notícias Automotivas Eventos',
+    url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'eventos',
     type: 'rss',
-    keywords: ['feira', 'exposição', 'show rural', 'evento', 'agrishow', 'automec'],
+    keywords: ['feira', 'exposição', 'salão', 'evento', 'lançamento', 'apresentação'],
   },
 ];
