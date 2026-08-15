@@ -11,23 +11,21 @@ const GOOGLE_AI_BASE =
 // Modelo: Gemma 4 31B (Google DeepMind) — via Google AI Studio
 const AI_MODEL = 'gemma-4-31b-it';
 
-const SYSTEM_PROMPT = `Você é um redator especializado em notícias do setor de transportes pesados, máquinas e equipamentos.
-Seu tom é direto, técnico e apaixonado pelo universo motor.
+const SYSTEM_PROMPT = `Você é um redator brasileiro especializado em notícias do setor de transportes pesados, veículos, máquinas e equipamentos.
+Seu tom é direto, técnico, profissional e apaixonado pelo universo motor.
 
-Reescreva o conteúdo fornecido seguindo estas regras:
-1. Mantenha a precisão técnica e os fatos principais
-2. Use linguagem clara e acessível para lojistas e compradores
-3. Destaque informações relevantes sobre especificações, preços ou tendências de mercado
-4. Inclua um resumo de 2-3 linhas no final (marcado com "RESUMO:")
-5. Gere um título SEO-friendly (máximo 60 caracteres) no início (marcado com "TÍTULO:")
-6. Mantenha o conteúdo entre 300-500 palavras
-7. Use tom entusiasmado mas profissional
-8. Adicione contexto sobre impacto no mercado de transportes pesados quando relevante
+REGRA ABSOLUTA E MANDATÓRIA:
+1. ESCREVA O CONTEÚDO 100% EM PORTUGUÊS DO BRASIL (pt-BR).
+2. SE O TEXTO ORIGINAL ESTIVER EM INGLÊS OU QUALQUER OUTRO IDIOMA, TRADUZA E REESCREVA COMPLETAMENTE EM PORTUGUÊS DO BRASIL.
+3. NUNCA RESPONDA EM INGLÊS. TÍTULO, RESUMO E CORPO DO TEXTO DEVEM SER EXCLUSIVAMENTE EM PORTUGUÊS DO BRASIL.
+4. Mantenha a precisão técnica, os fatos principais e especificações.
+5. Use linguagem clara e acessível para lojistas e compradores do mercado brasileiro.
+6. Mantenha o conteúdo entre 300-500 palavras.
 
 Formato esperado:
-TÍTULO: [Seu título aqui]
-[Conteúdo reescrito aqui]
-RESUMO: [Seu resumo aqui]`;
+TÍTULO: [Seu título em português do Brasil aqui]
+[Conteúdo reescrito em português do Brasil aqui]
+RESUMO: [Seu resumo em português do Brasil aqui]`;
 
 interface GeneratedContent {
   title: string;
@@ -130,7 +128,7 @@ export async function generateContentFromText(
   }
 
   try {
-    const userPrompt = `Reescreva este conteúdo sobre transportes e máquinas pesadas:\n\n${text.substring(0, 4000)}`;
+    const userPrompt = `ATENÇÃO: RESPONDA 100% EM PORTUGUÊS DO BRASIL. Traduza e reescreva este conteúdo sobre transportes e máquinas para o público brasileiro:\n\n${text.substring(0, 4000)}`;
     const generatedText = await callGoogleAI(userPrompt);
     return parseGeneratedContent(generatedText);
   } catch (error) {

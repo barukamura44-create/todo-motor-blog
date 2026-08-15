@@ -27,24 +27,25 @@ export interface ReelsScene {
   narration?: string;
 }
 
-const REELS_SYSTEM_PROMPT = `Você é um roteirista especializado em conteúdo para redes sociais do setor automotivo, agrícola e náutico.
-Crie roteiros de vídeos curtos (Reels/Shorts/TikTok) de 60 segundos que:
-1. Sejam dinâmicos e visualmente impactantes
-2. Usem linguagem informal mas profissional
-3. Incluam call-to-action para anunciar no Todo Motor
-4. Tenham hashtags relevantes do nicho
+const REELS_SYSTEM_PROMPT = `Você é um roteirista brasileiro especializado em conteúdo para redes sociais do setor automotivo, agrícola e náutico.
+
+REGRA ABSOLUTA E MANDATÓRIA:
+1. ESCREVA 100% EM PORTUGUÊS DO BRASIL (pt-BR).
+2. TÍTULO DO VÍDEO, CENAS, TEXTOS NA TELA, NARRAÇÕES, LEGENDA DO INSTAGRAM E TWITTER/X DEVEM SER OBRIGATORIAMENTE EM PORTUGUÊS DO BRASIL.
+3. Se o conteúdo original estiver em inglês, TRADUZA TUDO para o Português do Brasil.
+4. Apenas a linha "PROMPT_IMAGEM:" deve ser em inglês (para alimentar a IA de geração de imagem).
 
 FORMATO OBRIGATÓRIO (siga exatamente):
-TITULO_VIDEO: [máximo 10 palavras em maiúsculas]
+TITULO_VIDEO: [máximo 10 palavras em maiúsculas em português do Brasil]
 DURACAO: 60s
-CENA_1: [0-5s] | TIPO: abertura | TEXTO: [texto na tela] | IMAGEM: [descrição visual] | NARRAÇÃO: [o que falar]
-CENA_2: [5-15s] | TIPO: chamada | TEXTO: [texto na tela] | IMAGEM: [descrição visual] | NARRAÇÃO: [o que falar]
-CENA_3: [15-30s] | TIPO: conteudo | TEXTO: [ponto 1] | IMAGEM: [descrição visual] | NARRAÇÃO: [o que falar]
-CENA_4: [30-45s] | TIPO: conteudo | TEXTO: [ponto 2] | IMAGEM: [descrição visual] | NARRAÇÃO: [o que falar]
+CENA_1: [0-5s] | TIPO: abertura | TEXTO: [texto em português] | IMAGEM: [descrição visual em português] | NARRAÇÃO: [narração em português]
+CENA_2: [5-15s] | TIPO: chamada | TEXTO: [texto em português] | IMAGEM: [descrição visual em português] | NARRAÇÃO: [narração em português]
+CENA_3: [15-30s] | TIPO: conteudo | TEXTO: [ponto 1 em português] | IMAGEM: [descrição visual em português] | NARRAÇÃO: [narração em português]
+CENA_4: [30-45s] | TIPO: conteudo | TEXTO: [ponto 2 em português] | IMAGEM: [descrição visual em português] | NARRAÇÃO: [narração em português]
 CENA_5: [45-55s] | TIPO: cta | TEXTO: Anuncie no Todo Motor! | IMAGEM: [logo Todo Motor] | NARRAÇÃO: Quer vender mais? Anuncie no Todo Motor!
 CENA_6: [55-60s] | TIPO: encerramento | TEXTO: todoMotor.com.br | IMAGEM: [logo + fundo escuro] | NARRAÇÃO: Acesse todoMotor.com.br
-LEGENDA_INSTAGRAM: [texto completo com emojis e hashtags, max 2200 chars]
-TWITTER: [max 280 chars com hashtags]
+LEGENDA_INSTAGRAM: [texto completo em português com emojis e hashtags, max 2200 chars]
+TWITTER: [texto em português max 280 chars com hashtags]
 PROMPT_IMAGEM: [descrição detalhada em inglês para geração de imagem IA representativa do artigo]
 HASHTAGS: [lista separada por vírgula]`;
 
@@ -55,7 +56,7 @@ async function callGemma4(prompt: string): Promise<string> {
   const body = {
     system_instruction: { parts: [{ text: REELS_SYSTEM_PROMPT }] },
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.8, maxOutputTokens: 2000, topP: 0.95 },
+    generationConfig: { temperature: 0.7, maxOutputTokens: 2000, topP: 0.95 },
   };
 
   const res = await fetch(url, {
@@ -80,13 +81,13 @@ export async function generateReelsScript(
   articleContent: string,
   category: string,
 ): Promise<ReelsScript> {
-  const prompt = `Crie um roteiro de Reels para este artigo do blog Todo Motor:
+  const prompt = `ATENÇÃO: RESPONDA 100% EM PORTUGUÊS DO BRASIL. Crie um roteiro de Reels em Português do Brasil para este artigo:
 
 CATEGORIA: ${category}
 TÍTULO: ${articleTitle}
 CONTEÚDO: ${articleContent.substring(0, 1500)}
 
-Gere o roteiro completo seguindo o formato exato especificado.`;
+Gere o roteiro completo em Português do Brasil seguindo o formato exato especificado.`;
 
   const raw = await callGemma4(prompt);
   return parseReelsScript(raw, articleTitle);
