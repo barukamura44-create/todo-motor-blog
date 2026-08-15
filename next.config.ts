@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+import path from "path";
+
 
 const nextConfig: NextConfig = {
   // Allow images from external domains if needed in the future
@@ -7,7 +9,9 @@ const nextConfig: NextConfig = {
   },
 
   // Suppress workspace root detection warning caused by multiple lockfiles
-  turbopack: {},
+  turbopack: {
+    root: path.resolve('.'),
+  },
 };
 
 export default nextConfig;

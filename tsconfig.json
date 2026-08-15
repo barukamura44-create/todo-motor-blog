@@ -1,6 +1,7 @@
 {
   "include": [
     "src/**/*",
+    "server/news-agent/**/*",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
@@ -31,6 +32,9 @@
     "isolatedModules": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "types": ["node"],
     "plugins": [
       {

@@ -103,7 +103,7 @@ const INITIAL_SCRAPED_ITEMS: ScrapedItem[] = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'posts' | 'ai' | 'scraper' | 'leads'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'ai' | 'scraper' | 'leads' | 'agent'>('posts');
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
@@ -135,6 +135,19 @@ export default function AdminPage() {
   const [newSource, setNewSource] = useState({ name: '', url: '', categoryId: 4, keywords: '' });
   const [scraperRunning, setScraperRunning] = useState(false);
   const [notifyMsg, setNotifyMsg] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
+
+  // Agent state
+  interface AgentArticle {
+    originalUrl: string; originalTitle: string; categorySlug: string; categoryName: string;
+    sourceName: string; agentScore: number; rewrittenTitle: string; rewrittenContent: string;
+    excerpt: string; reelsScript: string; instagramCaption: string; twitterText: string;
+    suggestedImageUrl: string; hashtags: string[];
+  }
+  const [agentRunning, setAgentRunning] = useState(false);
+  const [agentQueue, setAgentQueue] = useState<AgentArticle[]>([]);
+  const [agentLastRun, setAgentLastRun] = useState<string | null>(null);
+  const [agentErrors, setAgentErrors] = useState<string[]>([]);
+  const [expandedReels, setExpandedReels] = useState<string | null>(null);
 
   function showNotification(text: string, type: 'success' | 'info' = 'success') {
     setNotifyMsg({ text, type });
@@ -410,6 +423,20 @@ export default function AdminPage() {
           >
             🎯 Leads Anunciantes ({leads.length})
           </button>
+          <button
+            onClick={() => setActiveTab('agent')}
+            className="btn-tab"
+            style={{
+              padding: '12px 20px', border: 'none', background: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-barlow-condensed)', fontSize: 16, fontWeight: 700, textTransform: 'uppercase',
+              color: activeTab === 'agent' ? 'var(--black)' : 'var(--gray)',
+              borderBottom: activeTab === 'agent' ? '3px solid var(--yellow)' : '3px solid transparent',
+              marginBottom: -2,
+              position: 'relative',
+            }}
+          >
+            🤖 Agente Editor {agentQueue.length > 0 && <span style={{ background: 'var(--yellow)', color: 'var(--black)', borderRadius: 10, fontSize: 11, padding: '1px 6px', marginLeft: 4, fontWeight: 800 }}>{agentQueue.length}</span>}
+          </button>
         </div>
 
         {/* ─── TAB 1: POSTAGENS ────────────────────────────────────────────── */}
@@ -662,6 +689,235 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 5: AGENTE EDITOR ─────────────────────────────────────── */}
+        {activeTab === 'agent' && (
+          <div style={{ display: 'grid', gap: 24 }}>
+
+            {/* Agent Control Panel */}
+            <div style={{ background: 'var(--black)', border: '3px solid var(--yellow)', borderRadius: 4, padding: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <h2 style={{ color: 'var(--yellow)', fontFamily: 'var(--font-barlow-condensed)', fontSize: 26, textTransform: 'uppercase', margin: '0 0 4px' }}>🤖 Agente Editor Autônomo</h2>
+                  <p style={{ color: '#aaa', fontSize: 13, margin: 0 }}>Powered by Gemma 4 · Ciclo automático a cada 5 dias · 1 artigo por categoria</p>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {agentLastRun && <span style={{ fontSize: 12, color: '#888' }}>Último ciclo: {new Date(agentLastRun).toLocaleString('pt-BR')}</span>}
+                  <button
+                    className="btn-yellow"
+                    disabled={agentRunning}
+                    onClick={async () => {
+                      setAgentRunning(true);
+                      setAgentErrors([]);
+                      showNotification('🤖 Agente iniciado! Buscando notícias e gerando roteiros...', 'info');
+                      try {
+                        const res = await fetch('/api/agent/run', { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                          setAgentLastRun(new Date().toISOString());
+                          showNotification(`✅ Ciclo completo! ${data.articlesQueued} artigos na fila de revisão.`);
+                          // Refresh queue
+                          const statusRes = await fetch('/api/agent/status');
+                          const statusData = await statusRes.json();
+                          if (statusData.success) setAgentQueue(statusData.queue || []);
+                        } else {
+                          setAgentErrors([data.error || 'Erro desconhecido']);
+                          showNotification('❌ Erro no agente. Verifique os detalhes.', 'info');
+                        }
+                      } catch (e) {
+                        setAgentErrors([String(e)]);
+                        showNotification('❌ Falha de conexão com o agente.', 'info');
+                      } finally {
+                        setAgentRunning(false);
+                      }
+                    }}
+                  >
+                    {agentRunning ? '🔄 Agente rodando...' : '▶️ Rodar Agente Agora'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 20 }}>
+                {[
+                  { label: 'Na Fila', value: agentQueue.length, color: '#F5C800' },
+                  { label: 'Categorias', value: '11', color: '#22C55E' },
+                  { label: 'Ciclo', value: '5 dias', color: '#06B6D4' },
+                  { label: 'Modelo', value: 'Gemma 4', color: '#8B5CF6' },
+                ].map(stat => (
+                  <div key={stat.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '12px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: stat.color, fontFamily: 'var(--font-barlow-condensed)' }}>{stat.value}</div>
+                    <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {agentErrors.length > 0 && (
+                <div style={{ marginTop: 16, padding: 12, background: 'rgba(239,68,68,0.15)', borderRadius: 4, border: '1px solid #EF4444' }}>
+                  <strong style={{ color: '#EF4444', fontSize: 12 }}>⚠️ Erros no último ciclo:</strong>
+                  {agentErrors.map((e, i) => <div key={i} style={{ fontSize: 12, color: '#fca5a5', marginTop: 4 }}>{e}</div>)}
+                </div>
+              )}
+            </div>
+
+            {/* Agent Queue */}
+            <div style={{ background: '#fff', border: '1px solid var(--lightgray)', borderRadius: 4, padding: 20 }}>
+              <h3 className="section-title" style={{ marginTop: 0 }}>📋 Fila de Revisão do Agente ({agentQueue.length})</h3>
+
+              {agentQueue.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>🤖</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum artigo na fila</div>
+                  <div style={{ fontSize: 13, marginTop: 8 }}>Clique em "Rodar Agente Agora" para o Gemma 4 buscar e reescrever notícias automaticamente.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 16 }}>
+                  {agentQueue.map((article, idx) => (
+                    <div key={article.originalUrl} style={{ border: '2px solid var(--lightgray)', borderRadius: 4, overflow: 'hidden' }}>
+
+                      {/* Article header */}
+                      <div style={{ display: 'grid', gridTemplateColumns: article.suggestedImageUrl ? '120px 1fr' : '1fr', gap: 0 }}>
+                        {article.suggestedImageUrl && (
+                          <img src={article.suggestedImageUrl} alt="" style={{ width: 120, height: 90, objectFit: 'cover' }} />
+                        )}
+                        <div style={{ padding: 16 }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', background: 'var(--black)', color: 'var(--yellow)', borderRadius: 2, textTransform: 'uppercase' }}>{article.categoryName}</span>
+                            <span style={{ fontSize: 10, color: '#888' }}>Fonte: {article.sourceName}</span>
+                            <span style={{ fontSize: 10, background: article.agentScore >= 8 ? '#DCFCE7' : article.agentScore >= 6 ? '#FEF3C7' : '#FEE2E2', color: article.agentScore >= 8 ? '#166534' : article.agentScore >= 6 ? '#92400E' : '#991B1B', padding: '2px 6px', borderRadius: 10, fontWeight: 700 }}>⭐ Score: {article.agentScore}/10</span>
+                          </div>
+                          <h4 style={{ margin: '0 0 6px', fontSize: 16, lineHeight: 1.3 }}>{article.rewrittenTitle}</h4>
+                          <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>{article.excerpt}</p>
+                          <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#0066CC', display: 'block', marginTop: 6 }}>🔗 Fonte original</a>
+                        </div>
+                      </div>
+
+                      {/* Reels preview toggle */}
+                      <div style={{ borderTop: '1px solid var(--lightgray)', background: '#f9f9f9' }}>
+                        <button
+                          onClick={() => setExpandedReels(expandedReels === article.originalUrl ? null : article.originalUrl)}
+                          style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                        >
+                          <span>🎬 Ver Roteiro de Reels + Conteúdo Social</span>
+                          <span>{expandedReels === article.originalUrl ? '▲' : '▼'}</span>
+                        </button>
+
+                        {expandedReels === article.originalUrl && (
+                          <div style={{ padding: '0 16px 16px', display: 'grid', gap: 12 }}>
+                            {/* Reels Script */}
+                            <div>
+                              <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: 4 }}>📹 Roteiro Completo (Markdown)</label>
+                              <pre style={{ background: '#1a1a2e', color: '#e2e8f0', padding: 14, borderRadius: 4, fontSize: 12, lineHeight: 1.6, overflowX: 'auto', whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto' }}>{article.reelsScript || 'Roteiro não gerado'}</pre>
+                              <button onClick={() => navigator.clipboard.writeText(article.reelsScript)} style={{ marginTop: 6, fontSize: 11, padding: '4px 10px', background: '#1a1a2e', color: '#e2e8f0', border: 'none', borderRadius: 2, cursor: 'pointer' }}>📋 Copiar Roteiro</button>
+                            </div>
+
+                            {/* Instagram */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                              <div>
+                                <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: 4 }}>📸 Legenda Instagram</label>
+                                <textarea readOnly rows={5} value={article.instagramCaption} style={{ width: '100%', padding: 8, border: '1px solid var(--lightgray)', borderRadius: 4, fontSize: 12, resize: 'vertical', background: '#fafafa' }} />
+                                <button onClick={() => navigator.clipboard.writeText(article.instagramCaption)} style={{ marginTop: 4, fontSize: 11, padding: '4px 10px', background: '#E1306C', color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer' }}>📋 Copiar IG</button>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: 4 }}>🐦 Twitter / X</label>
+                                <textarea readOnly rows={3} value={article.twitterText} style={{ width: '100%', padding: 8, border: '1px solid var(--lightgray)', borderRadius: 4, fontSize: 12, resize: 'vertical', background: '#fafafa' }} />
+                                <button onClick={() => navigator.clipboard.writeText(article.twitterText)} style={{ marginTop: 4, fontSize: 11, padding: '4px 10px', background: '#000', color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer' }}>📋 Copiar X/Twitter</button>
+                                <div style={{ marginTop: 8 }}>
+                                  <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: 4 }}>🔖 Hashtags</label>
+                                  <div style={{ fontSize: 12, color: '#0066CC', lineHeight: 1.8 }}>{(article.hashtags || []).join(' ')}</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ borderTop: '1px solid var(--lightgray)', padding: '12px 16px', display: 'flex', gap: 10, justifyContent: 'flex-end', background: '#fff' }}>
+                        <button
+                          style={{ padding: '8px 16px', fontSize: 13, background: '#EF4444', color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer', fontWeight: 700 }}
+                          onClick={() => {
+                            setAgentQueue(q => q.filter(a => a.originalUrl !== article.originalUrl));
+                            showNotification('Artigo rejeitado e removido da fila.', 'info');
+                          }}
+                        >
+                          ❌ Rejeitar
+                        </button>
+                        <button
+                          style={{ padding: '8px 16px', fontSize: 13, background: '#6B7280', color: '#fff', border: 'none', borderRadius: 2, cursor: 'pointer', fontWeight: 700 }}
+                          onClick={() => {
+                            setPostForm({
+                              title: article.rewrittenTitle,
+                              slug: article.rewrittenTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 60),
+                              categoryId: INITIAL_CATEGORIES.find(c => c.slug === article.categorySlug)?.id || 1,
+                              excerpt: article.excerpt,
+                              content: article.rewrittenContent,
+                              coverImage: article.suggestedImageUrl || '',
+                              status: 'draft',
+                              tags: (article.hashtags || []).slice(0, 5).join(', '),
+                            });
+                            setEditingPostId(null);
+                            setIsFormOpen(true);
+                            setActiveTab('posts');
+                            showNotification('Artigo importado como rascunho!', 'info');
+                          }}
+                        >
+                          ✏️ Editar antes de publicar
+                        </button>
+                        <button
+                          className="btn-yellow"
+                          style={{ padding: '8px 20px', fontSize: 13 }}
+                          onClick={() => {
+                            const newPost: Post = {
+                              id: Date.now(),
+                              title: article.rewrittenTitle,
+                              slug: article.rewrittenTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 60),
+                              content: article.rewrittenContent,
+                              excerpt: article.excerpt,
+                              categoryId: INITIAL_CATEGORIES.find(c => c.slug === article.categorySlug)?.id || 1,
+                              coverImage: article.suggestedImageUrl || '',
+                              status: 'published',
+                              sourceUrl: article.originalUrl,
+                              tags: (article.hashtags || []).join(', '),
+                              publishedAt: new Date(),
+                              createdAt: new Date(),
+                            };
+                            setPosts(prev => [newPost, ...prev]);
+                            setAgentQueue(q => q.filter(a => a.originalUrl !== article.originalUrl));
+                            showNotification(`✅ "${article.rewrittenTitle.substring(0, 40)}..." publicado!`);
+                          }}
+                        >
+                          ✅ Aprovar e Publicar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* How it works */}
+            <div style={{ background: '#fff', border: '1px solid var(--lightgray)', borderRadius: 4, padding: 20 }}>
+              <h3 className="section-title" style={{ marginTop: 0 }}>💡 Como o Agente Funciona</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                {[
+                  { step: '1', icon: '📡', title: 'Busca RSS', desc: 'Monitora 20+ fontes por categoria: Canal Rural, Motor1, ANAC, Náutica Online, Airway e mais.' },
+                  { step: '2', icon: '🧠', title: 'Gemma 4 Rankeia', desc: 'Pontua relevância (0-10) de cada notícia considerando atualidade e interesse do público.' },
+                  { step: '3', icon: '✍️', title: 'Reescreve', desc: 'Gemma 4 reescreve com tom técnico e apaixonado, otimizado para SEO.' },
+                  { step: '4', icon: '🎬', title: 'Gera Reels', desc: 'Roteiro de vídeo 60s + legenda Instagram + texto Twitter prontos para postar.' },
+                  { step: '5', icon: '🖼️', title: 'Imagem IA', desc: 'Google Imagen gera imagem representativa e premium para cada post.' },
+                  { step: '6', icon: '✅', title: 'Você Aprova', desc: 'Revise, edite ou publique com 1 clique. Controle total do conteúdo.' },
+                ].map(item => (
+                  <div key={item.step} style={{ padding: 16, background: 'var(--offwhite)', borderRadius: 4, borderLeft: '3px solid var(--yellow)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>{item.icon}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{item.step}. {item.title}</div>
+                    <div style={{ fontSize: 12, color: '#666', lineHeight: 1.5 }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
