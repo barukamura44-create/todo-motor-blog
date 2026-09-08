@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import PromoBannerLojista from '../components/PromoBannerLojista';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -627,6 +628,8 @@ export default function HomePage() {
 
       <main id="noticias">
         <div className="main-inner">
+          <PromoBannerLojista onOpenLeadModal={() => openLead('promo-banner')} />
+
           {/* Search bar */}
           <div className="search-bar">
             <input

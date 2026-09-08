@@ -100,7 +100,7 @@ function parseReelsScript(raw: string, articleTitle: string): ReelsScript {
   };
 
   const scenes: ReelsScene[] = [];
-  const sceneRegex = /CENA_\d+:\s*\[([^\]]+)\]\s*\|\s*TIPO:\s*(\w+)\s*\|\s*TEXTO:\s*([^|]+)\|\s*IMAGEM:\s*([^|]+)\|\s*NARRAÇÃO:\s*(.+?)(?=\nCENA_|\nLEGENDA|$)/gis;
+  const sceneRegex = /CENA_\d+:\s*\[([^\]]+)\]\s*\|\s*TIPO:\s*(\w+)\s*\|\s*TEXTO:\s*([^|]+)\|\s*IMAGEM:\s*([^|]+)\|\s*NARRAÇÃO:\s*([\s\S]+?)(?=\nCENA_|\nLEGENDA|$)/gi;
 
   let m;
   while ((m = sceneRegex.exec(raw)) !== null) {
