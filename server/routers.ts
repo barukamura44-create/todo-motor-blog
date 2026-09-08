@@ -20,7 +20,7 @@ import {
   updateScrapedItemStatus,
 } from "./db";
 import { generateContentFromUrl, generateContentFromText } from "./ai-service";
-import { generateCoverImage } from "./image-generation-service";
+import { generateCoverImage, searchStockImages } from "./image-generation-service";
 import { runScrapeJob, getJobStatus } from "./scraper/scraper-service";
 import { submitLead, listLeads, exportLeadsCsv } from "./leads-service";
 
@@ -202,10 +202,34 @@ export const appRouter = router({
           });
           return { success: true, data: result };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Erro ao gerar imagem';
+          const message = error instanceof Error ? error.message : 'Erro ao obter imagem';
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
-            message: `Falha na geração de imagem: ${message}`,
+            message: `Falha na obtenção de imagem: ${message}`,
+          });
+        }
+      }),
+
+    searchCoverImage: protectedProcedure
+      .input(z.object({
+        query: z.string().min(1),
+        categoryId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          let categorySlug = 'veiculos';
+          if (input.categoryId) {
+            const allCategories = await getCategories();
+            const category = allCategories.find(c => c.id === input.categoryId);
+            if (category) categorySlug = category.slug;
+          }
+          const results = await searchStockImages(input.query, categorySlug, 6);
+          return { success: true, data: results };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Erro ao buscar imagens';
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Falha na busca de imagens: ${message}`,
           });
         }
       }),

@@ -61,14 +61,15 @@
 - [x] Suporte para geração a partir de URL ou texto bruto
 - [x] Prompt de sistema com tom de voz do Todo Motor
 
-## Geração Automática de Imagens de Destaque
+## Geração Automática e Busca de Imagens de Destaque
 - [x] Criar serviço para gerar prompts de imagem baseado no conteúdo (image-generation-service.ts)
-- [x] Integrar com API de geração de imagens do Manus
-- [x] Adicionar botão "Gerar Imagem" no painel admin
-- [x] Exibir preview da imagem gerada
-- [x] Salvar URL da imagem no campo de capa automaticamente
-- [x] Procedure tRPC para geração de imagens
-- [ ] Testar geração de imagens com diferentes categorias
+- [x] Integrar com API de geração de imagens do Manus / DALL-E
+- [x] Implementar fallback automático para busca de imagens de estoque caso a IA falhe
+- [x] Criar procedure tRPC para busca manual de imagens (posts.searchCoverImage)
+- [x] Adicionar botões "IA" e "Buscar" no painel de administração
+- [x] Criar modal interativo de busca de imagens com miniaturas e seleção rápida
+- [x] Exibir preview da imagem gerada/selecionada com indicação de fallback
+- [x] Testar geração de imagens e busca em diferentes categorias (15 testes passando)
 
 ## Botões de Compartilhamento em Redes Sociais
 - [x] Criar componente de compartilhamento reutilizável (ShareButtons.tsx)

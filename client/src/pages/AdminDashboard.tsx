@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Plus, Edit2, Trash2, LogOut, Sparkles, Copy, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, LogOut, Sparkles, Copy, Image as ImageIcon, Search, Check, RefreshCw } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -23,6 +23,8 @@ export default function AdminDashboard() {
   const [aiPreview, setAiPreview] = useState<any>(null);
   const [generatedImage, setGeneratedImage] = useState<any>(null);
   const [imageGenerating, setImageGenerating] = useState(false);
+  const [isSearchImageOpen, setIsSearchImageOpen] = useState(false);
+  const [searchQueryText, setSearchQueryText] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -104,14 +106,29 @@ export default function AdminDashboard() {
     onSuccess: (result) => {
       if (result.success && result.data) {
         setGeneratedImage(result.data);
-        setFormData({ ...formData, coverImage: result.data.url });
-        toast.success("Imagem gerada com sucesso!");
+        setFormData((prev) => ({ ...prev, coverImage: result.data.url }));
+        if (result.data.fallbackUsed) {
+          toast.info(result.data.message || "Geração IA indisponível. Imagem HD de estoque selecionada automaticamente!");
+        } else {
+          toast.success("Imagem de capa gerada com IA!");
+        }
       }
     },
     onError: (error) => {
-      toast.error(error.message || "Erro ao gerar imagem");
+      toast.error(error.message || "Erro ao obter imagem de capa");
     },
   });
+
+  const { data: stockImageSearchResponse, isLoading: stockLoading, refetch: refetchStockImages } = trpc.posts.searchCoverImage.useQuery(
+    {
+      query: searchQueryText || formData.title || "veiculos",
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : undefined,
+    },
+    {
+      enabled: isSearchImageOpen,
+    }
+  );
+  const stockImages = stockImageSearchResponse?.data || [];
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -297,6 +314,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
                         />
                         <Button
+                          type="button"
                           onClick={() => {
                             if (!formData.title || !formData.categoryId) {
                               toast.error("Preencha título e categoria primeiro");
@@ -311,19 +329,46 @@ export default function AdminDashboard() {
                           disabled={generateImageMutation.isPending || !formData.title || !formData.categoryId}
                           variant="outline"
                           size="sm"
-                          className="flex-shrink-0"
+                          className="flex-shrink-0 gap-1"
+                          title="Gerar com IA (ou fallback para busca de estoque)"
                         >
                           {generateImageMutation.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <ImageIcon className="h-4 w-4" />
+                            <>
+                              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                              <span className="hidden sm:inline text-xs">IA</span>
+                            </>
                           )}
                         </Button>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setSearchQueryText(formData.title || "");
+                            setIsSearchImageOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="flex-shrink-0 gap-1"
+                          title="Buscar imagem de estoque por palavra-chave"
+                        >
+                          <Search className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">Buscar</span>
+                        </Button>
                       </div>
-                      {generatedImage && (
+                      {formData.coverImage && (
                         <div className="mt-2 p-2 bg-accent/10 border border-accent/20 rounded">
-                          <img src={generatedImage.url} alt="Preview" className="w-full h-32 object-cover rounded" />
-                          <p className="text-xs text-muted-foreground mt-1 truncate">Imagem gerada com sucesso</p>
+                          <img src={formData.coverImage} alt="Preview" className="w-full h-32 object-cover rounded" />
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {generatedImage?.source === 'ai' ? '✨ Gerada por IA' : generatedImage?.source === 'stock' ? '🖼️ Imagem de Estoque' : '🔗 URL Externa'}
+                            </p>
+                            {generatedImage?.fallbackUsed && (
+                              <Badge variant="outline" className="text-[10px] py-0 border-amber-500/40 text-amber-600 dark:text-amber-400">
+                                Fallback Ativado
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -558,6 +603,72 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Busca de Imagens de Estoque */}
+      <Dialog open={isSearchImageOpen} onOpenChange={setIsSearchImageOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <Search className="h-5 w-5 text-accent" />
+              Buscar Imagens para Capa
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Palavra-chave (ex: caminhão Scania, trator, escavadeira...)"
+                value={searchQueryText}
+                onChange={(e) => setSearchQueryText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    refetchStockImages();
+                  }
+                }}
+              />
+              <Button onClick={() => refetchStockImages()} disabled={stockLoading} className="bg-accent text-accent-foreground">
+                {stockLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+              </Button>
+            </div>
+
+            {stockLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              </div>
+            ) : stockImages.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">Nenhuma imagem encontrada para o termo pesquisado.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1">
+                {stockImages.map((img: any) => (
+                  <div
+                    key={img.id}
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, coverImage: img.url }));
+                      setGeneratedImage({
+                        url: img.url,
+                        prompt: img.title,
+                        source: 'stock',
+                        fallbackUsed: false,
+                      });
+                      setIsSearchImageOpen(false);
+                      toast.success("Imagem de capa selecionada!");
+                    }}
+                    className="group relative cursor-pointer border border-border rounded-lg overflow-hidden hover:border-accent hover:shadow-md transition-all bg-card"
+                  >
+                    <img src={img.thumbnailUrl || img.url} alt={img.title} className="w-full h-28 object-cover group-hover:scale-105 transition-transform" />
+                    <div className="p-1.5 text-[11px] truncate font-medium text-foreground bg-background/90">
+                      {img.title}
+                    </div>
+                    <div className="absolute inset-0 bg-accent/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[1px]">
+                      <Badge className="bg-accent text-accent-foreground shadow">Selecionar</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
