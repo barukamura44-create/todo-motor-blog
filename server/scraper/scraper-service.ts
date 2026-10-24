@@ -83,7 +83,7 @@ export async function runScrapeJob(categorySlug?: string): Promise<ScrapeJobResu
             url: s.url,
             categorySlug: cat?.slug || '',
             type: s.type,
-            keywords: s.keywords ? s.keywords.split(',').map(k => k.trim()) : [],
+            keywords: s.keywords ? s.keywords.split(',').map((k: string) => k.trim()) : [],
           } as SourceConfig;
         })
         .filter(s => !categorySlug || s.categorySlug === categorySlug);

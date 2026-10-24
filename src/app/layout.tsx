@@ -60,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* JSON-LD: Organization structured data for SEO */}
         <script
@@ -82,6 +82,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${barlow.variable} ${barlowCondensed.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>

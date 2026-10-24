@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { Link } from 'wouter';
 import PromoBannerLojista from '../components/PromoBannerLojista';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -564,7 +564,7 @@ function Footer({ onLeadClick }: { onLeadClick: () => void }) {
 
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>(DEMO_POSTS);
-  const [categories] = useState<Category[]>(DEMO_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>(DEMO_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [leadModalOpen, setLeadModalOpen] = useState(false);
@@ -572,16 +572,39 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const bannerInsertedAt = 3; // Insert lead banner after N posts
 
-  useEffect(() => {
-    setMounted(true);
+  function loadData() {
     fetch('/api/posts')
       .then(r => r.json())
       .then(data => {
-        if (data.success && Array.isArray(data.posts) && data.posts.length > 0) {
+        if (data.success && Array.isArray(data.posts)) {
           setPosts(data.posts);
         }
       })
       .catch(() => {});
+
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
+      })
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    setMounted(true);
+    loadData();
+
+    // Auto-refresh when user returns to tab or every 4s
+    const interval = setInterval(loadData, 4000);
+    const onFocus = () => loadData();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   // Exit intent detection

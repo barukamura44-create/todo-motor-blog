@@ -1,13 +1,15 @@
-import "dotenv/config";
+import "./load-env";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
+import { registerRestApiRoutes } from "../api-routes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { startScheduler } from "../news-agent/scheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -28,14 +30,20 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+import path from "path";
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Serve static files from root public and client/public
+  app.use(express.static(path.resolve(import.meta.dirname, "../..", "public")));
+  app.use(express.static(path.resolve(import.meta.dirname, "../..", "client", "public")));
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerRestApiRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
@@ -60,6 +68,11 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    try {
+      startScheduler();
+    } catch (e) {
+      console.error("[Scheduler] Erro ao iniciar agendador:", e);
+    }
   });
 }
 

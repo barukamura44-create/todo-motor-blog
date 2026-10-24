@@ -1,18 +1,24 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useParams } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
-import PostDetail from "./pages/PostDetail";
+import HomePage from "../../src/app/page";
+import PostDetailClient from "../../src/app/blog/[slug]/PostDetailClient";
 import AdminDashboard from "./pages/AdminDashboard";
+
+function BlogDetailWrapper() {
+  const params = useParams<{ slug: string }>();
+  return <PostDetailClient slug={params.slug || ""} />;
+}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/post/:slug" component={PostDetail} />
+      <Route path="/" component={HomePage} />
+      <Route path="/blog/:slug" component={BlogDetailWrapper} />
+      <Route path="/post/:slug" component={BlogDetailWrapper} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

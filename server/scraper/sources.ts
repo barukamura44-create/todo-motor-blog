@@ -14,14 +14,14 @@ export interface SourceConfig {
 export const SOURCES: SourceConfig[] = [
   // ─── VEÍCULOS / LANÇAMENTOS ───────────────────────────────────────────────
   {
-    name: 'Motor1 Brasil',
-    url: 'https://br.motor1.com/rss/news/all/',
+    name: 'Notícias Automotivas Veículos',
+    url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'veiculos',
     type: 'rss',
     keywords: ['carro', 'picape', 'suv', 'veículo', 'lançamento', 'teste', 'motor'],
   },
   {
-    name: 'Notícias Automotivas',
+    name: 'Notícias Automotivas Lançamentos',
     url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'lancamentos',
     type: 'rss',
@@ -42,13 +42,6 @@ export const SOURCES: SourceConfig[] = [
     categorySlug: 'transportes-pesados',
     type: 'rss',
     keywords: ['caminhão', 'frota', 'logística', 'transporte', 'carga', 'semirreboque'],
-  },
-  {
-    name: 'Motor1 Comercial/Pesados',
-    url: 'https://br.motor1.com/rss/category/comerciais-leves-e-pesados/',
-    categorySlug: 'transportes-pesados',
-    type: 'rss',
-    keywords: ['caminhão', 'van', 'furgão', 'pesados', 'scania', 'volvo', 'mercedes'],
   },
 
   // ─── MÁQUINAS AGRÍCOLAS ───────────────────────────────────────────────────

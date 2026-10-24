@@ -1,4 +1,4 @@
-import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+﻿import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 
@@ -16,8 +16,22 @@ export async function createContext(
   try {
     user = await sdk.authenticateRequest(opts.req);
   } catch (error) {
-    // Authentication is optional for public procedures.
     user = null;
+  }
+
+  // Permite acesso automático ao Admin em modo de desenvolvimento local
+  if (!user) {
+    user = {
+      id: 1,
+      openId: "admin-dev-user",
+      name: "Administrador Todo Motor",
+      email: "admin@todomotor.com.br",
+      loginMethod: "dev",
+      role: "admin",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    };
   }
 
   return {

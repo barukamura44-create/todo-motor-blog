@@ -25,19 +25,25 @@ declare global {
 if (!global.__agentQueue) global.__agentQueue = [];
 if (global.__agentRunning === undefined) global.__agentRunning = false;
 
-export async function POST() {
-  if (global.__agentRunning) {
+export async function POST(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const force = searchParams.get('force') === 'true';
+
+  const { runAgentCycle, resetAgentLock } = await import('@/server/news-agent/agent');
+
+  if (force) {
+    global.__agentRunning = false;
+    resetAgentLock();
+  } else if (global.__agentRunning) {
     return NextResponse.json({ success: false, error: 'Agente já está rodando' }, { status: 409 });
   }
 
   global.__agentRunning = true;
 
   try {
-    console.log('[API/agent/run] Iniciando ciclo do agente...');
+    console.log('[API/agent/run] Iniciando ciclo do agente (force = ' + force + ')...');
 
-    // Importação dinâmica para evitar problemas de bundle do Turbopack
-    const { runAgentCycle } = await import('@/server/news-agent/agent');
-    const result = await runAgentCycle();
+    const result = await runAgentCycle(force);
 
     // Adicionar à fila global
     for (const article of result.articles) {

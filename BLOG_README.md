@@ -145,16 +145,6 @@ Para testar o blog:
 - [Guia de Integração com LLM](./references/llm-integration.md)
 - [Guia de Atualizações Periódicas](./references/periodic-updates.md)
 
-## 🎯 Próximas Melhorias
-
-1. **Sistema de IA**: Implementar geração automática de conteúdo
-2. **Scraping**: Integrar agentes para coletar notícias de fontes externas
-3. **SEO**: Otimizar meta tags e URLs para melhor ranqueamento no Google
-4. **Analytics**: Adicionar rastreamento de visualizações e engajamento
-5. **Notificações**: Notificar usuários sobre novas notícias
-6. **Comentários**: Permitir que usuários comentem em artigos
-7. **Compartilhamento Social**: Integrar botões de compartilhamento em redes sociais
-
 ## 📞 Suporte
 
 Para dúvidas ou sugestões sobre o blog, entre em contato com a equipe do Todo Motor.

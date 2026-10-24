@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from 'wouter';
 
 interface Post {
   id: number;
@@ -77,74 +77,75 @@ const DEMO_CATEGORY: Category = {
   id: 4, name: 'Máquinas Agrícolas', slug: 'agricola', icon: '🌾', accentColor: '#22C55E',
 };
 
-function formatDate(d?: Date | string | null) {
-  if (!d) return '';
-  const date = typeof d === 'string' ? new Date(d) : d;
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+const DEMO_CATEGORIES: Category[] = [
+  { id: 1, name: 'Veículos', slug: 'veiculos', icon: '🚗', accentColor: '#F5C800' },
+  { id: 2, name: 'Barcos', slug: 'barcos', icon: '⛵', accentColor: '#0066CC' },
+  { id: 3, name: 'Aeronaves', slug: 'aeronaves', icon: '✈️', accentColor: '#6B48FF' },
+  { id: 4, name: 'Máquinas Agrícolas', slug: 'agricola', icon: '🌾', accentColor: '#22C55E' },
+  { id: 5, name: 'Terraplenagem', slug: 'terraplenagem', icon: '🏗️', accentColor: '#F97316' },
+  { id: 6, name: 'Transporte Pesado', slug: 'transportes-pesados', icon: '🚛', accentColor: '#EF4444' },
+  { id: 7, name: 'Lançamentos', slug: 'lancamentos', icon: '🚀', accentColor: '#EC4899' },
+  { id: 8, name: 'Eventos', slug: 'eventos', icon: '📅', accentColor: '#8B5CF6' },
+  { id: 9, name: 'Jet Ski', slug: 'jetski', icon: '🌊', accentColor: '#06B6D4' },
+  { id: 10, name: 'Drones', slug: 'drones', icon: '🛸', accentColor: '#10B981' },
+  { id: 11, name: 'Helicópteros', slug: 'helicopteros', icon: '🚁', accentColor: '#6366F1' },
+];
+
+function formatDate(date?: Date | string | null): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 function renderContent(content: string) {
-  // Simple markdown-like rendering
-  const lines = content.split('\n');
-  const elements: React.ReactNode[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    if (line.startsWith('## ')) {
-      elements.push(<h2 key={i} className="article-h2">{line.slice(3)}</h2>);
-    } else if (line.startsWith('# ')) {
-      elements.push(<h3 key={i} className="article-h3">{line.slice(2)}</h3>);
-    } else if (line.startsWith('- ')) {
-      const listItems: React.ReactNode[] = [];
-      while (i < lines.length && lines[i].startsWith('- ')) {
-        listItems.push(<li key={i}>{lines[i].slice(2)}</li>);
-        i++;
-      }
-      elements.push(<ul key={`ul-${i}`} className="article-ul">{listItems}</ul>);
-      continue;
-    } else if (line.trim() !== '') {
-      // Handle **bold** inline
-      const parts = line.split(/(\*\*[^*]+\*\*)/g);
-      const rendered = parts.map((part, j) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={j}>{part.slice(2, -2)}</strong>
-          : part
-      );
-      elements.push(<p key={i} className="article-p">{rendered}</p>);
+  if (!content) return null;
+  return content.split('\n\n').map((paragraph, index) => {
+    if (paragraph.startsWith('## ')) {
+      return <h2 key={index} className="text-xl font-bold my-4">{paragraph.replace('## ', '')}</h2>;
     }
-    i++;
-  }
-  return elements;
+    return <p key={index} className="mb-4 leading-relaxed">{paragraph}</p>;
+  });
 }
 
 function ShareButtons({ title, slug }: { title: string; slug: string }) {
-  const url = typeof window !== 'undefined' ? window.location.href : `https://blog.todomotor.com.br/blog/${slug}`;
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/blog/${slug}` : '';
+  const text = encodeURIComponent(title);
   const encodedUrl = encodeURIComponent(url);
-  const encodedTitle = encodeURIComponent(title);
 
-  function copyLink() {
-    navigator.clipboard.writeText(url).catch(() => {});
-    alert('Link copiado!');
-  }
+  const handleCopy = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(url);
+    }
+  };
 
   return (
-    <div className="share-buttons">
-      <span className="share-label">Compartilhar:</span>
-      <a href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`} target="_blank" rel="noopener noreferrer"
-        className="share-btn share-wa" id="share-whatsapp" aria-label="Compartilhar no WhatsApp">
+    <div className="article-share-row flex gap-2 my-4">
+      <a
+        href={`https://wa.me/?text=${text}%20${encodedUrl}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ padding: '6px 12px', background: '#25D366', color: '#fff', borderRadius: '4px', textDecoration: 'none', fontSize: '13px' }}
+      >
         💬 WhatsApp
       </a>
-      <a href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`} target="_blank" rel="noopener noreferrer"
-        className="share-btn share-tw" id="share-twitter" aria-label="Compartilhar no Twitter">
-        🐦 Twitter
+      <a
+        href={`https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ padding: '6px 12px', background: '#1DA1F2', color: '#fff', borderRadius: '4px', textDecoration: 'none', fontSize: '13px' }}
+      >
+        🐦 Twitter / X
       </a>
-      <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`} target="_blank" rel="noopener noreferrer"
-        className="share-btn share-li" id="share-linkedin" aria-label="Compartilhar no LinkedIn">
-        🔗 LinkedIn
-      </a>
-      <button className="share-btn share-copy" onClick={copyLink} id="share-copy" aria-label="Copiar link">
-        📋 Copiar
+      <button
+        onClick={handleCopy}
+        style={{ padding: '6px 12px', background: '#333', color: '#fff', borderRadius: '4px', border: 'none', fontSize: '13px', cursor: 'pointer' }}
+      >
+        🔗 Copiar Link
       </button>
     </div>
   );
@@ -152,34 +153,39 @@ function ShareButtons({ title, slug }: { title: string; slug: string }) {
 
 function LeadSection({ onLeadClick }: { onLeadClick: () => void }) {
   return (
-    <div className="article-lead-cta" style={{ position: 'relative', overflow: 'hidden', padding: '24px' }}>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <img src="/todo-motor-banner.jpg" alt="Todo Motor Banner" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.2 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.85) 100%)' }} />
-      </div>
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', width: '100%', flexWrap: 'wrap' }}>
-        <div className="article-lead-content">
-          <img src="/todo-motor-banner.jpg" alt="Logo Banner" style={{ width: '80px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--yellow)', flexShrink: 0 }} />
-          <div>
-            <h3 style={{ color: '#fff', margin: 0, fontSize: '20px' }}>Anuncie na plataforma Todo Motor</h3>
-            <p style={{ color: '#ccc', margin: '4px 0 0', fontSize: '13px' }}>Alcance compradores qualificados em todo o Brasil. Veículos, máquinas, barcos e aeronaves.</p>
-          </div>
-        </div>
-        <div className="article-lead-actions">
-          <button className="btn-yellow" onClick={onLeadClick} id="article-lead-btn">Quero Anunciar</button>
-          <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" className="btn-whatsapp" id="article-whatsapp">
-            💬 WhatsApp
-          </a>
-        </div>
-      </div>
+    <div className="article-lead-cta" style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px', marginTop: '30px', border: '1px solid #333' }}>
+      <h3 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '18px' }}>Quer anunciar seus produtos ou serviços?</h3>
+      <p style={{ color: '#aaa', margin: '0 0 16px 0', fontSize: '14px' }}>
+        Conecte sua marca a milhares de profissionais e compradores do mercado automotivo, pesados e agrícolas.
+      </p>
+      <button
+        onClick={onLeadClick}
+        style={{ background: '#F5C800', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        Anuncie no Todo Motor
+      </button>
     </div>
   );
 }
 
 export default function PostDetailClient({ slug }: { slug: string }) {
-  const [post] = useState<Post>(DEMO_POST);
-  const [category] = useState<Category>(DEMO_CATEGORY);
+  const [post, setPost] = useState<Post>(DEMO_POST);
+  const [category, setCategory] = useState<Category>(DEMO_CATEGORY);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!slug) return;
+    fetch(`/api/posts?slug=${encodeURIComponent(slug)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.post) {
+          setPost(data.post);
+          const cat = DEMO_CATEGORIES.find(c => c.id === data.post.categoryId) || DEMO_CATEGORY;
+          setCategory(cat);
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
 
   const accent = category.accentColor || CATEGORY_ACCENT[category.slug] || '#F5C800';
   const tags = post.tags ? post.tags.split(',').map(t => t.trim()) : [];

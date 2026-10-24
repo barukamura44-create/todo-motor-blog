@@ -12,7 +12,7 @@ export default function PromoBannerLojista({ onOpenLeadModal }: PromoBannerLojis
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const promoCode = process.env.NEXT_PUBLIC_STRIPE_PROMO_CODE || 'LANCAMENTO20';
+  const promoCode = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_STRIPE_PROMO_CODE) || 'LANCAMENTO20';
 
   const handleCopyCode = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -1,3 +1,4 @@
+import { getSchedulerInfo, getQueue, runAgentNow } from './news-agent/scheduler';
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -25,6 +26,15 @@ import { runScrapeJob, getJobStatus } from "./scraper/scraper-service";
 import { submitLead, listLeads, exportLeadsCsv } from "./leads-service";
 
 export const appRouter = router({
+  // NEWS AGENT
+  agent: router({
+    status: publicProcedure.query(() => getSchedulerInfo()),
+    queue: publicProcedure.query(() => getQueue()),
+    runNow: protectedProcedure.mutation(async () => {
+      return await runAgentNow();
+    }),
+  }),
+
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

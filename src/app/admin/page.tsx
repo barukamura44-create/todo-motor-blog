@@ -710,7 +710,7 @@ export default function AdminPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                 <div>
                   <h2 style={{ color: 'var(--yellow)', fontFamily: 'var(--font-barlow-condensed)', fontSize: 26, textTransform: 'uppercase', margin: '0 0 4px' }}>🤖 Agente Editor Autônomo</h2>
-                  <p style={{ color: '#aaa', fontSize: 13, margin: 0 }}>Powered by Gemma 4 · Ciclo automático a cada 5 dias · 1 artigo por categoria</p>
+                  <p style={{ color: '#aaa', fontSize: 13, margin: 0 }}>Powered by Gemini 1.5 Flash · Ciclo automático a cada 5 dias · 1 artigo por categoria</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   {agentLastRun && <span style={{ fontSize: 12, color: '#888' }}>Último ciclo: {new Date(agentLastRun).toLocaleString('pt-BR')}</span>}
@@ -722,7 +722,7 @@ export default function AdminPage() {
                       setAgentErrors([]);
                       showNotification('🤖 Agente iniciado! Buscando notícias e gerando roteiros...', 'info');
                       try {
-                        const res = await fetch('/api/agent/run', { method: 'POST' });
+                        const res = await fetch('/api/agent/run?force=true', { method: 'POST' });
                         const data = await res.json();
                         if (data.success) {
                           setAgentLastRun(new Date().toISOString());
@@ -745,6 +745,19 @@ export default function AdminPage() {
                   >
                     {agentRunning ? '🔄 Agente rodando...' : '▶️ Rodar Agente Agora'}
                   </button>
+                  {agentRunning && (
+                    <button
+                      style={{ padding: '8px 14px', fontSize: 12, background: '#DC2626', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 700 }}
+                      onClick={async () => {
+                        await fetch('/api/agent/status?reset=true');
+                        setAgentRunning(false);
+                        setAgentErrors([]);
+                        showNotification('🔓 Status do agente resetado e liberado com sucesso!', 'info');
+                      }}
+                    >
+                      🔓 Desbloquear
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -754,7 +767,7 @@ export default function AdminPage() {
                   { label: 'Na Fila', value: agentQueue.length, color: '#F5C800' },
                   { label: 'Categorias', value: '11', color: '#22C55E' },
                   { label: 'Ciclo', value: '5 dias', color: '#06B6D4' },
-                  { label: 'Modelo', value: 'Gemma 4', color: '#8B5CF6' },
+                  { label: 'Modelo', value: 'Gemini 1.5 Flash', color: '#8B5CF6' },
                 ].map(stat => (
                   <div key={stat.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '12px 16px', textAlign: 'center' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: stat.color, fontFamily: 'var(--font-barlow-condensed)' }}>{stat.value}</div>
@@ -779,7 +792,7 @@ export default function AdminPage() {
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>🤖</div>
                   <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum artigo na fila</div>
-                  <div style={{ fontSize: 13, marginTop: 8 }}>Clique em "Rodar Agente Agora" para o Gemma 4 buscar e reescrever notícias automaticamente.</div>
+                  <div style={{ fontSize: 13, marginTop: 8 }}>Clique em "Rodar Agente Agora" para o Gemini 1.5 Flash buscar e reescrever notícias automaticamente.</div>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gap: 16 }}>
@@ -922,8 +935,8 @@ export default function AdminPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
                 {[
                   { step: '1', icon: '📡', title: 'Busca RSS', desc: 'Monitora 20+ fontes por categoria: Canal Rural, Motor1, ANAC, Náutica Online, Airway e mais.' },
-                  { step: '2', icon: '🧠', title: 'Gemma 4 Rankeia', desc: 'Pontua relevância (0-10) de cada notícia considerando atualidade e interesse do público.' },
-                  { step: '3', icon: '✍️', title: 'Reescreve', desc: 'Gemma 4 reescreve com tom técnico e apaixonado, otimizado para SEO.' },
+                  { step: '2', icon: '🧠', title: 'Gemini 1.5 Rankeia', desc: 'Pontua relevância (0-10) de cada notícia considerando atualidade e interesse do público.' },
+                  { step: '3', icon: '✍️', title: 'Reescreve', desc: 'Gemini 1.5 Flash reescreve com tom técnico e apaixonado, otimizado para SEO.' },
                   { step: '4', icon: '🎬', title: 'Gera Reels', desc: 'Roteiro de vídeo 60s + legenda Instagram + texto Twitter prontos para postar.' },
                   { step: '5', icon: '🖼️', title: 'Imagem IA', desc: 'Google Imagen gera imagem representativa e premium para cada post.' },
                   { step: '6', icon: '✅', title: 'Você Aprova', desc: 'Revise, edite ou publique com 1 clique. Controle total do conteúdo.' },

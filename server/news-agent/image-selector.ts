@@ -10,7 +10,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY ?? '';
+function getApiKey(): string {
+  return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+}
 
 // Imagens padrão por categoria (já existentes em /public)
 const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
@@ -72,12 +74,12 @@ async function generateAiImage(
   categorySlug: string,
   postSlug: string,
 ): Promise<string> {
-  if (!GOOGLE_AI_API_KEY) {
+  if (!getApiKey()) {
     return CATEGORY_FALLBACK_IMAGES[categorySlug] ?? '/todo-motor-banner.jpg';
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${GOOGLE_AI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${getApiKey()}`;
 
     const body = {
       instances: [{

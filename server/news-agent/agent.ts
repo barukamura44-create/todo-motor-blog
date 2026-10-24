@@ -4,9 +4,9 @@
  *
  * Pipeline a cada 5 dias:
  *  1. Buscar RSS de todas as categorias
- *  2. Gemma 4 pontua relevância (0-10) de cada item
+ *  2. Gemini 2.5 Flash pontua relevância (0-10) de cada item
  *  3. Selecionar top 1 por categoria
- *  4. Reescrever com Gemma 4 (SEO-friendly)
+ *  4. Reescrever com Gemini 2.5 Flash (SEO-friendly)
  *  5. Gerar roteiro Reels + imagem IA
  *  6. Salvar na fila de revisão
  */
@@ -18,9 +18,11 @@ import { generateContentFromText } from '../ai-service';
 import { generateReelsScript, reelsScriptToMarkdown } from './reels-script';
 import { generateImageForPost } from './image-selector';
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY ?? '';
+function getApiKey(): string {
+  return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+}
 const GOOGLE_AI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const AI_MODEL = 'gemma-4-31b-it';
+const AI_MODEL = 'gemini-1.5-flash';
 
 export interface AgentArticle {
   originalUrl: string;
@@ -69,50 +71,67 @@ function getNextCycleMs(): number {
   return Math.max(0, nextRun.getTime() - Date.now());
 }
 
+const CANDIDATE_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+];
+
 /**
- * Pontua a relevância de um artigo usando Gemma 4 (0-10)
+ * Pontua a relevância de um artigo usando Gemini (0-10) com fallback automático
  */
 async function scoreRelevance(title: string, content: string, category: string): Promise<number> {
-  if (!GOOGLE_AI_API_KEY) return 5; // fallback se sem chave
+  if (!getApiKey()) return 5; // fallback se sem chave
 
-  try {
-    const url = `${GOOGLE_AI_BASE}/models/${AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
-    const body = {
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Você é um editor de um blog de veículos, máquinas e equipamentos. Pontue de 0 a 10 a relevância e interesse desta notícia para lojistas e compradores na categoria "${category}". Responda APENAS com o número inteiro.
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const url = `${GOOGLE_AI_BASE}/models/${model}:generateContent?key=${getApiKey()}`;
+      const body = {
+        contents: [{
+          role: 'user',
+          parts: [{
+            text: `Você é um editor de um blog de veículos, máquinas e equipamentos. Pontue de 0 a 10 a relevância e interesse desta notícia para lojistas e compradores na categoria "${category}". Responda APENAS com o número inteiro.
 
 TÍTULO: ${title}
 CONTEÚDO: ${content.substring(0, 500)}
 
 PONTUAÇÃO (0-10):`
-        }]
-      }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 5 },
-    };
+          }]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
+      };
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-    if (!res.ok) return 5;
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '5';
-    const score = parseInt(text.trim().match(/\d+/)?.[0] ?? '5', 10);
-    return Math.min(10, Math.max(0, score));
-  } catch {
-    return 5;
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '5';
+        const score = parseInt(text.trim().match(/\d+/)?.[0] ?? '5', 10);
+        return Math.min(10, Math.max(0, score));
+      }
+    } catch {
+      // tenta próximo modelo
+    }
   }
+
+  return 5;
+}
+
+export function resetAgentLock() {
+  isAgentRunning = false;
 }
 
 /**
  * Roda o ciclo completo do agente de notícias
  */
-export async function runAgentCycle(): Promise<AgentCycleResult> {
-  if (isAgentRunning) throw new Error('Agente já está rodando');
+export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
+  if (isAgentRunning && !force) throw new Error('Agente já está rodando');
 
   isAgentRunning = true;
   const cycleId = `cycle-${Date.now()}`;
@@ -151,7 +170,7 @@ export async function runAgentCycle(): Promise<AgentCycleResult> {
             const fullText = `${item.title} ${item.description}`;
             if (!isRelevant(fullText, source.keywords)) continue;
 
-            // Pontuar com Gemma 4
+            // Pontuar com Gemini 2.5 Flash
             const score = await scoreRelevance(item.title, item.description, categorySlug);
             console.log(`[NewsAgent]   Score ${score}/10: "${item.title.substring(0, 50)}"`);
 
@@ -185,7 +204,7 @@ export async function runAgentCycle(): Promise<AgentCycleResult> {
       console.log(`[NewsAgent]   ✅ Selecionado: "${best.title.substring(0, 60)}" (score: ${best.score})`);
 
       try {
-        // 1. Reescrever com Gemma 4
+        // 1. Reescrever com Gemini 2.5 Flash
         const rewritten = await generateContentFromText(best.content);
 
         // 2. Gerar roteiro Reels
@@ -264,3 +283,4 @@ export async function runAgentCycle(): Promise<AgentCycleResult> {
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+

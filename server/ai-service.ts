@@ -2,14 +2,21 @@
 // Compatível com: gemma-3-27b-it, gemma-3-12b-it, gemini-2.0-flash, etc.
 // Docs: https://ai.google.dev/api/generate-content
 
-const GOOGLE_AI_API_KEY =
-  process.env.GOOGLE_AI_API_KEY ?? '';
+function getApiKey(): string {
+  return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+}
 
 const GOOGLE_AI_BASE =
   'https://generativelanguage.googleapis.com/v1beta';
 
-// Modelo: Gemma 4 31B (Google DeepMind) — via Google AI Studio
-const AI_MODEL = 'gemma-4-31b-it';
+// Lista de modelos resilientes com fallback automático em caso de 503 ou 404
+const CANDIDATE_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+];
 
 const SYSTEM_PROMPT = `Você é um redator brasileiro especializado em notícias do setor de transportes pesados, veículos, máquinas e equipamentos.
 Seu tom é direto, técnico, profissional e apaixonado pelo universo motor.
@@ -33,59 +40,49 @@ interface GeneratedContent {
   excerpt: string;
 }
 
-// ─── Chamada à API do Google AI Studio ────────────────────────────────────
+// ─── Chamada à API do Google AI Studio com Fallback Resiliente ─────────────
 async function callGoogleAI(userPrompt: string): Promise<string> {
-  if (!GOOGLE_AI_API_KEY) {
+  if (!getApiKey()) {
     throw new Error(
       'GOOGLE_AI_API_KEY não configurada. Adicione ao arquivo .env.local'
     );
   }
 
-  const url = `${GOOGLE_AI_BASE}/models/${AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
+  let lastError = '';
 
-  const body = {
-    system_instruction: {
-      parts: [{ text: SYSTEM_PROMPT }],
-    },
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: userPrompt }],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1500,
-      topP: 0.95,
-    },
-  };
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const url = `${GOOGLE_AI_BASE}/models/${model}:generateContent?key=${getApiKey()}`;
+      const body = {
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 8192, topP: 0.95 },
+      };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    console.error('[AI Service] Google AI error:', response.status, err);
-    throw new Error(
-      `Google AI API error ${response.status}: ${JSON.stringify(err)}`
-    );
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          console.log(`[AI Service] ✅ Gerado com sucesso usando modelo: ${model}`);
+          return text;
+        }
+      }
+
+      const err = await response.json().catch(() => ({}));
+      lastError = `[${model}] status ${response.status}: ${JSON.stringify(err)}`;
+      console.warn(`[AI Service] Modelo ${model} indisponível, tentando próximo...`, response.status);
+    } catch (e) {
+      lastError = `[${model}] ${String(e)}`;
+    }
   }
 
-  const data = await response.json();
-
-  // Estrutura da resposta: data.candidates[0].content.parts[0].text
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    console.error('[AI Service] Resposta inesperada:', JSON.stringify(data));
-    throw new Error('Resposta inválida da API do Google AI');
-  }
-
-  return text;
+  throw new Error(`Google AI API error (todos os modelos falharam): ${lastError}`);
 }
 
 // ─── Funções públicas ──────────────────────────────────────────────────────
@@ -182,3 +179,4 @@ function extractTextFromHtml(html: string): string {
 
   return text.replace(/\s+/g, ' ').trim();
 }
+

@@ -2,18 +2,74 @@
  * News Agent Scheduler — node-cron
  * Roda o agente de notícias a cada 5 dias às 8h da manhã.
  *
- * Cron: '0 8 */5 * *'
+ * Cron: '0 8 * / 5 * *' (a cada 5 dias)
  *  └─ Às 08:00, a cada 5 dias
  */
 
-import cron from 'node-cron';
+import cron, { ScheduledTask } from 'node-cron';
+import fs from 'fs';
+import path from 'path';
 import { runAgentCycle, getAgentStatus } from './agent';
+import type { AgentArticle } from './agent';
+import { createPost } from '../db';
 
 let schedulerStarted = false;
-let cronTask: cron.ScheduledTask | null = null;
+let cronTask: ScheduledTask | null = null;
 
 // Armazena os resultados em memória para o admin consultar
-const agentQueue: import('./agent').AgentArticle[] = [];
+const QUEUE_FILE = path.join(process.cwd(), 'server', 'news-agent', 'agent-queue.json');
+const agentQueue: AgentArticle[] = loadQueue();
+
+function loadQueue(): AgentArticle[] {
+  try {
+    if (fs.existsSync(QUEUE_FILE)) return JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'));
+  } catch (err) {
+    console.warn('[Scheduler] Não foi possível ler a fila salva:', err);
+  }
+  return [];
+}
+
+function saveQueue() {
+  try {
+    fs.writeFileSync(QUEUE_FILE, JSON.stringify(agentQueue, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[Scheduler] Erro ao salvar fila:', err);
+  }
+}
+
+const CATEGORY_IDS: Record<string, number> = {
+  veiculos: 1, barcos: 2, aeronaves: 3, agricola: 4, terraplenagem: 5,
+  'transportes-pesados': 6, lancamentos: 7, eventos: 8, jetski: 9, drones: 10, helicopteros: 11,
+};
+
+function slugify(text: string): string {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 80);
+}
+
+async function autoPublishArticles(articles: AgentArticle[]) {
+  for (const article of articles) {
+    try {
+      await createPost({
+        title: article.rewrittenTitle,
+        slug: `${slugify(article.rewrittenTitle)}-${Date.now().toString(36)}`,
+        content: article.rewrittenContent,
+        excerpt: article.excerpt,
+        coverImage: article.suggestedImageUrl || null,
+        categoryId: CATEGORY_IDS[article.categorySlug] ?? 1,
+        status: 'published',
+        authorId: 1,
+        tags: (article.hashtags || []).join(', ').substring(0, 500),
+        isScraped: true,
+        sourceUrl: article.originalUrl,
+        publishedAt: new Date(),
+      });
+      console.log(`[Scheduler] ✅ Publicado: "${article.rewrittenTitle.substring(0, 60)}"`);
+    } catch (err) {
+      console.error(`[Scheduler] ❌ Falha ao publicar "${article.rewrittenTitle}":`, err);
+    }
+  }
+}
 let lastRunAt: Date | null = null;
 let nextRunAt: Date | null = null;
 
@@ -33,7 +89,10 @@ export function getSchedulerInfo() {
 
 export function removeFromQueue(originalUrl: string) {
   const idx = agentQueue.findIndex(a => a.originalUrl === originalUrl);
-  if (idx !== -1) agentQueue.splice(idx, 1);
+  if (idx !== -1) {
+    agentQueue.splice(idx, 1);
+    saveQueue();
+  }
 }
 
 /**
@@ -90,7 +149,19 @@ async function executeCycle(): Promise<import('./agent').AgentCycleResult> {
       agentQueue.splice(50);
     }
 
-    console.log(`[Scheduler] Ciclo concluído. ${result.articlesQueued} artigos na fila.`);
+    saveQueue();
+
+
+    if (result.articles.length > 0) {
+
+
+      await autoPublishArticles(result.articles);
+
+
+    }
+
+
+    console.log(`[Scheduler] Ciclo concluído. ${result.articlesQueued} artigos gerados e publicados.`);
     return result;
   } catch (err) {
     console.error('[Scheduler] Erro no ciclo:', err);

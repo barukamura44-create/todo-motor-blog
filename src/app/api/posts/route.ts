@@ -81,12 +81,17 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    if (!global.__postsStore) global.__postsStore = [];
-    
-    // Add to beginning of array so newest post appears first
-    global.__postsStore.unshift(newPost);
+    if (!global.__postsStore) global.__postsStore = [...INITIAL_POSTS];
 
-    console.log(`[PostsAPI] ✅ Novo post publicado: "${newPost.title}" (ID: ${newPost.id})`);
+    // Upsert by id or slug
+    const existingIdx = global.__postsStore.findIndex(p => p.id === newPost.id || p.slug === newPost.slug);
+    if (existingIdx !== -1) {
+      global.__postsStore[existingIdx] = newPost;
+    } else {
+      global.__postsStore.unshift(newPost);
+    }
+
+    console.log(`[PostsAPI] ✅ Post publicado/atualizado: "${newPost.title}" (slug: ${newPost.slug})`);
 
     return NextResponse.json({ success: true, post: newPost });
   } catch (err) {

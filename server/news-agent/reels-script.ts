@@ -1,13 +1,15 @@
 /**
  * Reels Script Generator — Todo Motor Blog
  *
- * Uses Gemma 4 (Google AI Studio) to generate a complete Reels/Short video
+ * Uses Gemini 2.5 Flash (Google AI Studio) to generate a complete Reels/Short video
  * script + Instagram caption + Twitter/X text for each published article.
  */
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY ?? '';
+function getApiKey(): string {
+  return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+}
 const GOOGLE_AI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const AI_MODEL = 'gemma-4-31b-it';
+const AI_MODEL = 'gemini-1.5-flash';
 
 export interface ReelsScript {
   videoTitle: string;        // Max 10 words
@@ -49,31 +51,48 @@ TWITTER: [texto em português max 280 chars com hashtags]
 PROMPT_IMAGEM: [descrição detalhada em inglês para geração de imagem IA representativa do artigo]
 HASHTAGS: [lista separada por vírgula]`;
 
-async function callGemma4(prompt: string): Promise<string> {
-  if (!GOOGLE_AI_API_KEY) throw new Error('GOOGLE_AI_API_KEY não configurada');
+const CANDIDATE_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+];
 
-  const url = `${GOOGLE_AI_BASE}/models/${AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
-  const body = {
-    system_instruction: { parts: [{ text: REELS_SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 2000, topP: 0.95 },
-  };
+async function callGeminiFlash(prompt: string): Promise<string> {
+  if (!getApiKey()) throw new Error('GOOGLE_AI_API_KEY não configurada');
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  let lastError = '';
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Gemma 4 API error ${res.status}: ${JSON.stringify(err)}`);
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const url = `${GOOGLE_AI_BASE}/models/${model}:generateContent?key=${getApiKey()}`;
+      const body = {
+        system_instruction: { parts: [{ text: REELS_SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 8192, topP: 0.95 },
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      }
+
+      const err = await res.json().catch(() => ({}));
+      lastError = `[${model}] status ${res.status}: ${JSON.stringify(err)}`;
+    } catch (e) {
+      lastError = `[${model}] ${String(e)}`;
+    }
   }
 
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Resposta inválida da API');
-  return text;
+  throw new Error(`Google AI API error (roteiro Reels): ${lastError}`);
 }
 
 export async function generateReelsScript(
@@ -89,7 +108,7 @@ CONTEÚDO: ${articleContent.substring(0, 1500)}
 
 Gere o roteiro completo em Português do Brasil seguindo o formato exato especificado.`;
 
-  const raw = await callGemma4(prompt);
+  const raw = await callGeminiFlash(prompt);
   return parseReelsScript(raw, articleTitle);
 }
 
@@ -163,3 +182,4 @@ ${script.hashtags.join(' ')}
 ## 🎨 Prompt de Imagem IA
 ${script.suggestedImagePrompt}`;
 }
+

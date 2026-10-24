@@ -1,19 +1,16 @@
 {
   "include": [
     "src/**/*",
-    "server/news-agent/**/*",
+    "client/src/**/*",
+    "server/**/*",
+    "shared/**/*",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "build",
-    "dist",
-    "client",
-    "server",
-    "drizzle",
-    "shared",
-    "**/*.test.ts"
+    "dist"
   ],
   "compilerOptions": {
     "incremental": true,
@@ -33,7 +30,8 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./client/src/*", "./src/*", "./*"],
+      "@shared/*": ["./shared/*"]
     },
     "types": ["node"],
     "plugins": [
