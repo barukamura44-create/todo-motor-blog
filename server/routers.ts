@@ -1,4 +1,5 @@
-import { getSchedulerInfo, getQueue, runAgentNow } from './news-agent/scheduler';
+import { getSchedulerInfo, getQueue, runAgentNow, clearAgentQueue, removeFromQueue } from './news-agent/scheduler';
+import { clearSeenUrls } from './scraper/dedup';
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -33,6 +34,17 @@ export const appRouter = router({
     runNow: protectedProcedure.mutation(async () => {
       return await runAgentNow();
     }),
+    clearQueue: publicProcedure.mutation(async () => {
+      clearAgentQueue();
+      clearSeenUrls();
+      return { success: true };
+    }),
+    removeItem: publicProcedure
+      .input(z.object({ originalUrl: z.string() }))
+      .mutation(async ({ input }) => {
+        removeFromQueue(input.originalUrl);
+        return { success: true };
+      }),
   }),
 
   system: systemRouter,

@@ -95,6 +95,13 @@ export function removeFromQueue(originalUrl: string) {
   }
 }
 
+export function clearAgentQueue() {
+  agentQueue.length = 0;
+  saveQueue();
+  console.log('[Scheduler] 🧹 Fila/cache de geração do agente foi limpa.');
+  return { success: true };
+}
+
 /**
  * Inicia o agendador node-cron (apenas uma vez).
  * Deve ser chamado na inicialização do servidor Next.js.

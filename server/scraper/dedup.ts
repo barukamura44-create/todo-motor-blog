@@ -53,6 +53,14 @@ export function markAsSeen(originalUrl: string): void {
 }
 
 /**
+ * Clear the in-memory cache of seen URLs.
+ */
+export function clearSeenUrls(): void {
+  seenUrls.clear();
+  console.log('[Dedup] 🧹 Cache de URLs vistas foi limpo.');
+}
+
+/**
  * Simple keyword relevance filter.
  * Returns true if the text contains at least one of the provided keywords.
  * Uses word boundary checking on short keywords to prevent false positive substring matches.

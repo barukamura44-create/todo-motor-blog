@@ -38,6 +38,9 @@ import {
   Clock,
   Send,
   Video,
+  Grid3x3,
+  Grid2x2,
+  LayoutGrid,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -80,6 +83,12 @@ export default function AdminDashboard() {
   const [postCategoryFilter, setPostCategoryFilter] = useState<string>("all");
   const [leadSegmentFilter, setLeadSegmentFilter] = useState<string>("all");
   const [expandedReelsId, setExpandedReelsId] = useState<number | null>(null);
+
+  // Agent Grid & Cache States
+  const [agentGridCols, setAgentGridCols] = useState<"3" | "2" | "1">("3");
+  const [agentSearchFilter, setAgentSearchFilter] = useState("");
+  const [agentCategoryFilter, setAgentCategoryFilter] = useState<string>("all");
+  const [selectedAgentArticle, setSelectedAgentArticle] = useState<any | null>(null);
 
   // New RSS Source State
   const [newSource, setNewSource] = useState({
@@ -148,6 +157,27 @@ export default function AdminDashboard() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao autorizar publicação");
+    },
+  });
+
+  const clearAgentQueueMutation = trpc.agent.clearQueue.useMutation({
+    onSuccess: () => {
+      toast.success("Cache e fila de matérias do robô limpos com sucesso!");
+      refetchAgentQueue();
+      refetchAgentStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao limpar cache do robô");
+    },
+  });
+
+  const removeAgentItemMutation = trpc.agent.removeItem.useMutation({
+    onSuccess: () => {
+      toast.success("Matéria removida da fila.");
+      refetchAgentQueue();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao remover matéria");
     },
   });
 
@@ -1169,111 +1199,300 @@ export default function AdminDashboard() {
                 <TabsTrigger value="manual-ai">Gerar sob Demanda (URL/Texto)</TabsTrigger>
               </TabsList>
 
-              {/* Subtab: Agent Queue */}
+              {/* Subtab: Agent Queue & Sistema Grid */}
               <TabsContent value="queue" className="space-y-4">
+                {/* Grid Toolbar & Controls */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-card border border-border rounded-xl">
+                  {/* Search and Category Filter */}
+                  <div className="flex flex-1 items-center gap-2 flex-wrap">
+                    <div className="relative flex-1 min-w-[200px] max-w-sm">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por título ou assunto..."
+                        value={agentSearchFilter}
+                        onChange={(e) => setAgentSearchFilter(e.target.value)}
+                        className="pl-8 text-xs h-8 bg-background border-border"
+                      />
+                    </div>
+
+                    <Select value={agentCategoryFilter} onValueChange={setAgentCategoryFilter}>
+                      <SelectTrigger className="w-[170px] text-xs h-8 bg-background border-border">
+                        <SelectValue placeholder="Todas Categorias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas Categorias</SelectItem>
+                        <SelectItem value="veiculos">🚗 Veículos</SelectItem>
+                        <SelectItem value="lancamentos">🚀 Lançamentos</SelectItem>
+                        <SelectItem value="transportes-pesados">🚛 Transportes Pesados</SelectItem>
+                        <SelectItem value="agricola">🌾 Agrícola</SelectItem>
+                        <SelectItem value="terraplenagem">🏗️ Terraplenagem</SelectItem>
+                        <SelectItem value="barcos">⛵ Barcos / Náutica</SelectItem>
+                        <SelectItem value="jetski">🌊 Jet Ski</SelectItem>
+                        <SelectItem value="aeronaves">✈️ Aeronaves</SelectItem>
+                        <SelectItem value="helicopteros">🚁 Helicópteros</SelectItem>
+                        <SelectItem value="drones">🛸 Drones</SelectItem>
+                        <SelectItem value="eventos">📅 Eventos</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {agentQueue.length > 0 && (
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {agentQueue.filter((art: any) => {
+                          const matchesCat = agentCategoryFilter === "all" || art.categorySlug === agentCategoryFilter;
+                          const matchesQ = !agentSearchFilter.trim() ||
+                            (art.rewrittenTitle || "").toLowerCase().includes(agentSearchFilter.toLowerCase()) ||
+                            (art.excerpt || "").toLowerCase().includes(agentSearchFilter.toLowerCase());
+                          return matchesCat && matchesQ;
+                        }).length} de {agentQueue.length} matérias
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Grid Layout Switcher & Clear Cache */}
+                  <div className="flex items-center gap-2 self-end md:self-auto">
+                    <div className="flex items-center border border-border rounded-lg p-0.5 bg-background">
+                      <Button
+                        variant={agentGridCols === "3" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setAgentGridCols("3")}
+                        className={agentGridCols === "3" ? "h-7 w-7 p-0 bg-accent text-accent-foreground shadow-sm" : "h-7 w-7 p-0 text-muted-foreground"}
+                        title="Grid de 3 Colunas"
+                      >
+                        <Grid3x3 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant={agentGridCols === "2" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setAgentGridCols("2")}
+                        className={agentGridCols === "2" ? "h-7 w-7 p-0 bg-accent text-accent-foreground shadow-sm" : "h-7 w-7 p-0 text-muted-foreground"}
+                        title="Grid de 2 Colunas"
+                      >
+                        <Grid2x2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant={agentGridCols === "1" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setAgentGridCols("1")}
+                        className={agentGridCols === "1" ? "h-7 w-7 p-0 bg-accent text-accent-foreground shadow-sm" : "h-7 w-7 p-0 text-muted-foreground"}
+                        title="Visualização em Lista"
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {agentQueue.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={clearAgentQueueMutation.isPending}
+                        onClick={() => {
+                          if (confirm("Deseja realmente limpar todo o cache e fila de matérias do robô?")) {
+                            clearAgentQueueMutation.mutate();
+                          }
+                        }}
+                        className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30 gap-1.5"
+                      >
+                        {clearAgentQueueMutation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        Limpar Cache
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Empty State */}
                 {agentQueue.length === 0 ? (
-                  <Card className="p-12 text-center border-dashed border-border">
-                    <Bot className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                    <h4 className="font-bold text-sm text-foreground">Nenhuma notícia gerada na fila recente</h4>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                      Clique em "Disparar Ciclo do Robô Agora" acima para iniciar a varredura nas fontes cadastradas.
+                  <Card className="p-12 text-center border-dashed border-border bg-card/50">
+                    <div className="p-4 bg-muted/30 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-4">
+                      <Bot className="h-8 w-8 text-muted-foreground/60" />
+                    </div>
+                    <h4 className="font-bold text-base text-foreground">Fila de matérias do robô limpa</h4>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                      O cache de geração foi limpo com sucesso. Clique no botão acima para disparar um novo ciclo de varredura ou aguarde o agendamento automático.
                     </p>
+                    <div className="mt-5">
+                      <Button
+                        onClick={() => runAgentNowMutation.mutate()}
+                        disabled={runAgentNowMutation.isPending}
+                        className="bg-accent text-accent-foreground font-bold text-xs shadow gap-2"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        Gerar Novas Matérias com IA
+                      </Button>
+                    </div>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {agentQueue.map((art: any, idx: number) => (
-                      <Card key={idx} className="p-4 border-border bg-card hover:border-accent/40 transition flex flex-col justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <Badge variant="outline" className="text-[10px] border-accent/40 text-accent font-semibold">
-                              {art.categoryName || art.categorySlug}
-                            </Badge>
-                            <Badge className="bg-accent text-accent-foreground font-mono text-[10px] font-bold">
-                              Score: {art.agentScore}/10
-                            </Badge>
-                          </div>
+                  /* Sistema Grid Responsivo */
+                  <div
+                    className={
+                      agentGridCols === "3"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                        : agentGridCols === "2"
+                        ? "grid grid-cols-1 lg:grid-cols-2 gap-5"
+                        : "grid grid-cols-1 gap-4"
+                    }
+                  >
+                    {agentQueue
+                      .filter((art: any) => {
+                        const matchesCat = agentCategoryFilter === "all" || art.categorySlug === agentCategoryFilter;
+                        const matchesQ = !agentSearchFilter.trim() ||
+                          (art.rewrittenTitle || "").toLowerCase().includes(agentSearchFilter.toLowerCase()) ||
+                          (art.excerpt || "").toLowerCase().includes(agentSearchFilter.toLowerCase()) ||
+                          (art.sourceName || "").toLowerCase().includes(agentSearchFilter.toLowerCase());
+                        return matchesCat && matchesQ;
+                      })
+                      .map((art: any, idx: number) => {
+                        const scoreColor =
+                          art.agentScore >= 8
+                            ? "bg-emerald-500 text-white"
+                            : art.agentScore >= 6
+                            ? "bg-amber-500 text-black font-bold"
+                            : "bg-rose-500 text-white";
 
-                          <h4 className="font-bold text-sm text-foreground line-clamp-2">{art.rewrittenTitle}</h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{art.excerpt}</p>
-
-                          {art.suggestedImageUrl && (
-                            <img src={art.suggestedImageUrl} alt="" className="w-full h-32 object-cover rounded-md mt-2" />
-                          )}
-
-                          {/* Reels Script Section */}
-                          {art.reelsScript && (
-                            <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/80 text-xs">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="font-bold text-[11px] text-foreground flex items-center gap-1.5">
-                                  <Video className="h-3.5 w-3.5 text-pink-500" />
-                                  Roteiro de Reels / Shorts:
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(art.reelsScript);
-                                    toast.success("Roteiro copiado para a área de transferência!");
+                        return (
+                          <Card
+                            key={art.originalUrl || idx}
+                            className="overflow-hidden border border-border/80 bg-card hover:border-accent/60 transition-all shadow-sm hover:shadow-md flex flex-col justify-between group"
+                          >
+                            <div>
+                              {/* Card Image Container */}
+                              <div className="relative aspect-video w-full bg-muted overflow-hidden">
+                                <img
+                                  src={art.suggestedImageUrl || "/todo-motor-banner.jpg"}
+                                  alt={art.rewrittenTitle}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/todo-motor-banner.jpg";
                                   }}
-                                  className="h-6 px-1.5 text-[10px] text-muted-foreground"
+                                />
+                                {/* Category Badge */}
+                                <div className="absolute top-2.5 left-2.5">
+                                  <Badge className="bg-black/80 backdrop-blur-md text-accent border border-accent/40 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
+                                    {art.categoryName || art.categorySlug}
+                                  </Badge>
+                                </div>
+                                {/* Score Badge */}
+                                <div className="absolute top-2.5 right-2.5">
+                                  <Badge className={`text-[10px] font-mono font-extrabold shadow-md px-2 py-0.5 ${scoreColor}`}>
+                                    Score: {art.agentScore}/10
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Card Content Body */}
+                              <div className="p-4 space-y-2.5">
+                                <div className="flex items-center justify-between text-[11px] text-muted-foreground gap-2">
+                                  <span className="truncate font-medium">Fonte: {art.sourceName}</span>
+                                  {art.originalUrl && (
+                                    <a
+                                      href={art.originalUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-accent hover:underline flex items-center gap-1 shrink-0"
+                                    >
+                                      Original <ExternalLink className="h-2.5 w-2.5" />
+                                    </a>
+                                  )}
+                                </div>
+
+                                <h4 className="font-bold text-sm text-foreground line-clamp-2 leading-snug group-hover:text-accent transition-colors">
+                                  {art.rewrittenTitle}
+                                </h4>
+
+                                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                                  {art.excerpt}
+                                </p>
+
+                                {/* Media Badges */}
+                                <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                                  {art.reelsScript && (
+                                    <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-400 border-pink-500/30 gap-1 px-1.5 py-0 font-normal">
+                                      <Video className="h-2.5 w-2.5" /> Reels 60s
+                                    </Badge>
+                                  )}
+                                  {art.instagramCaption && (
+                                    <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/30 gap-1 px-1.5 py-0 font-normal">
+                                      📸 Instagram
+                                    </Badge>
+                                  )}
+                                  {art.suggestedImageUrl && (
+                                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30 gap-1 px-1.5 py-0 font-normal">
+                                      🖼️ Imagem HD
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Card Footer Actions */}
+                            <div className="p-3 bg-muted/20 border-t border-border flex items-center justify-between gap-2 flex-wrap">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setSelectedAgentArticle(art)}
+                                className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground gap-1"
+                              >
+                                <Eye className="h-3 w-3" />
+                                Visualizar
+                              </Button>
+
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const catId = CATEGORY_SLUG_TO_ID[art.categorySlug] || 1;
+                                    setFormData({
+                                      title: art.rewrittenTitle,
+                                      content: art.rewrittenContent,
+                                      excerpt: art.excerpt,
+                                      categoryId: catId.toString(),
+                                      coverImage: art.suggestedImageUrl || "",
+                                      status: "published",
+                                    });
+                                    setActiveTab("editor");
+                                    toast.info("Conteúdo carregado no editor.");
+                                  }}
+                                  className="text-xs h-7 px-2.5"
                                 >
-                                  <Copy className="h-3 w-3 mr-1" />
-                                  Copiar
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  disabled={directPublishAgentMutation.isPending}
+                                  onClick={() => {
+                                    const catId = CATEGORY_SLUG_TO_ID[art.categorySlug] || 1;
+                                    directPublishAgentMutation.mutate({
+                                      title: art.rewrittenTitle,
+                                      content: art.rewrittenContent,
+                                      excerpt: art.excerpt,
+                                      categoryId: catId,
+                                      coverImage: art.suggestedImageUrl || "",
+                                      status: "published",
+                                    });
+                                  }}
+                                  className="bg-accent text-accent-foreground font-bold text-xs h-7 px-2.5 shadow gap-1"
+                                >
+                                  <Check className="h-3 w-3" />
+                                  Publicar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => removeAgentItemMutation.mutate({ originalUrl: art.originalUrl })}
+                                  className="text-xs h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                  title="Remover da fila"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
-                              <p className="text-muted-foreground text-[11px] line-clamp-3 italic">
-                                "{art.reelsScript}"
-                              </p>
                             </div>
-                          )}
-                        </div>
-
-                        <div className="pt-4 mt-3 border-t border-border flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[10px] text-muted-foreground truncate max-w-[130px]">Fonte: {art.sourceName}</span>
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                const catId = CATEGORY_SLUG_TO_ID[art.categorySlug] || 1;
-                                setFormData({
-                                  title: art.rewrittenTitle,
-                                  content: art.rewrittenContent,
-                                  excerpt: art.excerpt,
-                                  categoryId: catId.toString(),
-                                  coverImage: art.suggestedImageUrl || "",
-                                  status: "published",
-                                });
-                                setActiveTab("editor");
-                                toast.info("Conteúdo carregado no editor.");
-                              }}
-                              className="text-xs h-7 px-2.5"
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              size="sm"
-                              disabled={directPublishAgentMutation.isPending}
-                              onClick={() => {
-                                const catId = CATEGORY_SLUG_TO_ID[art.categorySlug] || 1;
-                                directPublishAgentMutation.mutate({
-                                  title: art.rewrittenTitle,
-                                  content: art.rewrittenContent,
-                                  excerpt: art.excerpt,
-                                  categoryId: catId,
-                                  coverImage: art.suggestedImageUrl || "",
-                                  status: "published",
-                                });
-                              }}
-                              className="bg-accent text-accent-foreground font-bold text-xs h-7 px-2.5 shadow gap-1"
-                            >
-                              <Check className="h-3 w-3" />
-                              Autorizar Publicação
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                          </Card>
+                        );
+                      })}
                   </div>
                 )}
               </TabsContent>
@@ -1642,6 +1861,179 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Modal: Visualização Completa de Matéria Gerada pelo Robô ───────── */}
+      <Dialog open={!!selectedAgentArticle} onOpenChange={(open) => !open && setSelectedAgentArticle(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedAgentArticle && (
+            <div className="space-y-4 pt-1">
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border bg-muted">
+                <img
+                  src={selectedAgentArticle.suggestedImageUrl || "/todo-motor-banner.jpg"}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 flex gap-2">
+                  <Badge className="bg-black/80 text-accent border border-accent/40 text-xs font-bold px-2.5 py-1 uppercase">
+                    {selectedAgentArticle.categoryName || selectedAgentArticle.categorySlug}
+                  </Badge>
+                  <Badge className="bg-accent text-accent-foreground font-mono text-xs font-bold px-2.5 py-1">
+                    Score: {selectedAgentArticle.agentScore}/10
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs text-muted-foreground">Fonte: {selectedAgentArticle.sourceName}</span>
+                <h2 className="text-xl font-extrabold text-foreground mt-1 leading-snug">
+                  {selectedAgentArticle.rewrittenTitle}
+                </h2>
+                <p className="text-sm font-medium text-muted-foreground mt-2 italic bg-muted/30 p-3 rounded-lg border border-border">
+                  "{selectedAgentArticle.excerpt}"
+                </p>
+              </div>
+
+              <Tabs defaultValue="article" className="w-full">
+                <TabsList className="grid grid-cols-3 w-full max-w-md">
+                  <TabsTrigger value="article">Matéria Completa</TabsTrigger>
+                  <TabsTrigger value="reels">Roteiro Reels</TabsTrigger>
+                  <TabsTrigger value="social">Social Media</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="article" className="mt-3">
+                  <div className="p-4 bg-card rounded-xl border border-border space-y-3 max-h-96 overflow-y-auto">
+                    {selectedAgentArticle.rewrittenContent?.split("\n\n").map((p: string, i: number) => (
+                      <p key={i} className="text-xs text-foreground/90 leading-relaxed">
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="reels" className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Video className="h-4 w-4 text-pink-500" />
+                      Roteiro de 60 Segundos com Cenas e Narração
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedAgentArticle.reelsScript || "");
+                        toast.success("Roteiro copiado!");
+                      }}
+                      className="text-xs h-7 gap-1"
+                    >
+                      <Copy className="h-3 w-3" /> Copiar Roteiro
+                    </Button>
+                  </div>
+                  <pre className="p-4 bg-black/90 text-emerald-400 rounded-xl text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-80 overflow-y-auto border border-border">
+                    {selectedAgentArticle.reelsScript || "Roteiro não gerado"}
+                  </pre>
+                </TabsContent>
+
+                <TabsContent value="social" className="mt-3 space-y-3">
+                  <div className="p-3 bg-card border border-border rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">Legenda Instagram</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedAgentArticle.instagramCaption || "");
+                          toast.success("Legenda copiada!");
+                        }}
+                        className="text-xs h-6 px-2 text-pink-500"
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copiar
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap bg-muted/30 p-2.5 rounded-lg border border-border">
+                      {selectedAgentArticle.instagramCaption || "Sem legenda"}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-card border border-border rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">Twitter / X</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedAgentArticle.twitterText || "");
+                          toast.success("Tweet copiado!");
+                        }}
+                        className="text-xs h-6 px-2 text-sky-400"
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copiar
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap bg-muted/30 p-2.5 rounded-lg border border-border">
+                      {selectedAgentArticle.twitterText || "Sem texto"}
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex items-center justify-between pt-3 border-t border-border flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedAgentArticle(null)}
+                  className="text-xs"
+                >
+                  Fechar
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const catId = CATEGORY_SLUG_TO_ID[selectedAgentArticle.categorySlug] || 1;
+                      setFormData({
+                        title: selectedAgentArticle.rewrittenTitle,
+                        content: selectedAgentArticle.rewrittenContent,
+                        excerpt: selectedAgentArticle.excerpt,
+                        categoryId: catId.toString(),
+                        coverImage: selectedAgentArticle.suggestedImageUrl || "",
+                        status: "published",
+                      });
+                      setSelectedAgentArticle(null);
+                      setActiveTab("editor");
+                      toast.info("Conteúdo carregado no editor.");
+                    }}
+                    className="text-xs"
+                  >
+                    Editar no Editor
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={directPublishAgentMutation.isPending}
+                    onClick={() => {
+                      const catId = CATEGORY_SLUG_TO_ID[selectedAgentArticle.categorySlug] || 1;
+                      directPublishAgentMutation.mutate({
+                        title: selectedAgentArticle.rewrittenTitle,
+                        content: selectedAgentArticle.rewrittenContent,
+                        excerpt: selectedAgentArticle.excerpt,
+                        categoryId: catId,
+                        coverImage: selectedAgentArticle.suggestedImageUrl || "",
+                        status: "published",
+                      });
+                      setSelectedAgentArticle(null);
+                    }}
+                    className="bg-accent text-accent-foreground font-bold text-xs gap-1.5 shadow"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Publicar Agora no Blog
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

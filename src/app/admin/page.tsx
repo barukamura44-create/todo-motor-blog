@@ -148,6 +148,8 @@ export default function AdminPage() {
   const [agentLastRun, setAgentLastRun] = useState<string | null>(null);
   const [agentErrors, setAgentErrors] = useState<string[]>([]);
   const [expandedReels, setExpandedReels] = useState<string | null>(null);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
+  const [agentCategoryFilter, setAgentCategoryFilter] = useState('all');
 
   useEffect(() => {
     fetch('/api/posts?status=all')
@@ -784,35 +786,110 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Agent Queue */}
-            <div style={{ background: '#fff', border: '1px solid var(--lightgray)', borderRadius: 4, padding: 20 }}>
-              <h3 className="section-title" style={{ marginTop: 0 }}>📋 Fila de Revisão do Agente ({agentQueue.length})</h3>
+            {/* Agent Queue & Grid System */}
+            <div style={{ background: '#fff', border: '1px solid var(--lightgray)', borderRadius: 6, padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>📋 Fila de Revisão do Agente ({agentQueue.length})</h3>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#666' }}>Sistema Grid com matérias selecionadas e reescritas pelo robô de IA</p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  {agentQueue.length > 0 && (
+                    <button
+                      onClick={async () => {
+                        if (confirm('Deseja realmente limpar todo o cache e a fila de matérias do robô?')) {
+                          try {
+                            const res = await fetch('/api/agent/status?clear=true');
+                            const data = await res.json();
+                            if (data.success) {
+                              setAgentQueue([]);
+                              showNotification('🧹 Cache e fila do robô limpos com sucesso!', 'info');
+                            }
+                          } catch {
+                            showNotification('❌ Erro ao limpar cache do robô.', 'info');
+                          }
+                        }
+                      }}
+                      style={{ padding: '6px 12px', fontSize: 12, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: 4, cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      🗑️ Limpar Cache
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filters toolbar */}
+              {agentQueue.length > 0 && (
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, padding: '10px 14px', background: '#f8fafc', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Buscar por título ou assunto..."
+                    value={agentSearchQuery}
+                    onChange={(e) => setAgentSearchQuery(e.target.value)}
+                    style={{ flex: '1', minWidth: 200, padding: '6px 10px', fontSize: 12, border: '1px solid #cbd5e1', borderRadius: 4 }}
+                  />
+
+                  <select
+                    value={agentCategoryFilter}
+                    onChange={(e) => setAgentCategoryFilter(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}
+                  >
+                    <option value="all">Todas as Categorias</option>
+                    {INITIAL_CATEGORIES.map(c => (
+                      <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {agentQueue.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>🤖</div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum artigo na fila</div>
-                  <div style={{ fontSize: 13, marginTop: 8 }}>Clique em "Rodar Agente Agora" para o Gemini 1.5 Flash buscar e reescrever notícias automaticamente.</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum artigo na fila (Cache Limpo)</div>
+                  <div style={{ fontSize: 13, marginTop: 8 }}>Clique em "Rodar Agente Agora" acima para iniciar um novo ciclo de varredura e geração com IA.</div>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gap: 16 }}>
-                  {agentQueue.map((article, idx) => (
-                    <div key={article.originalUrl} style={{ border: '2px solid var(--lightgray)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+                  {agentQueue
+                    .filter(a => {
+                      const matchCat = agentCategoryFilter === 'all' || a.categorySlug === agentCategoryFilter;
+                      const matchQ = !agentSearchQuery.trim() ||
+                        a.rewrittenTitle.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+                        (a.excerpt || '').toLowerCase().includes(agentSearchQuery.toLowerCase());
+                      return matchCat && matchQ;
+                    })
+                    .map((article, idx) => (
+                    <div key={article.originalUrl} style={{ border: '1px solid var(--lightgray)', borderRadius: 6, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
 
-                      {/* Article header */}
-                      <div style={{ display: 'grid', gridTemplateColumns: article.suggestedImageUrl ? '120px 1fr' : '1fr', gap: 0 }}>
-                        {article.suggestedImageUrl && (
-                          <img src={article.suggestedImageUrl} alt="" style={{ width: 120, height: 90, objectFit: 'cover' }} />
-                        )}
-                        <div style={{ padding: 16 }}>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', background: 'var(--black)', color: 'var(--yellow)', borderRadius: 2, textTransform: 'uppercase' }}>{article.categoryName}</span>
-                            <span style={{ fontSize: 10, color: '#888' }}>Fonte: {article.sourceName}</span>
-                            <span style={{ fontSize: 10, background: article.agentScore >= 8 ? '#DCFCE7' : article.agentScore >= 6 ? '#FEF3C7' : '#FEE2E2', color: article.agentScore >= 8 ? '#166534' : article.agentScore >= 6 ? '#92400E' : '#991B1B', padding: '2px 6px', borderRadius: 10, fontWeight: 700 }}>⭐ Score: {article.agentScore}/10</span>
+                      {/* Article Card Image & Badges */}
+                      <div>
+                        <div style={{ position: 'relative', width: '100%', height: 160, background: '#f1f5f9', overflow: 'hidden' }}>
+                          <img
+                            src={article.suggestedImageUrl || '/todo-motor-banner.jpg'}
+                            alt={article.rewrittenTitle}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/todo-motor-banner.jpg'; }}
+                          />
+                          <div style={{ position: 'absolute', top: 8, left: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', background: 'rgba(0,0,0,0.85)', color: 'var(--yellow)', borderRadius: 3, textTransform: 'uppercase' }}>
+                              {article.categoryName || article.categorySlug}
+                            </span>
                           </div>
-                          <h4 style={{ margin: '0 0 6px', fontSize: 16, lineHeight: 1.3 }}>{article.rewrittenTitle}</h4>
-                          <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>{article.excerpt}</p>
-                          <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#0066CC', display: 'block', marginTop: 6 }}>🔗 Fonte original</a>
+                          <div style={{ position: 'absolute', top: 8, right: 8 }}>
+                            <span style={{ fontSize: 10, background: article.agentScore >= 8 ? '#DCFCE7' : article.agentScore >= 6 ? '#FEF3C7' : '#FEE2E2', color: article.agentScore >= 8 ? '#166534' : article.agentScore >= 6 ? '#92400E' : '#991B1B', padding: '3px 8px', borderRadius: 10, fontWeight: 800 }}>
+                              Score: {article.agentScore}/10
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginBottom: 6 }}>
+                            <span>Fonte: {article.sourceName}</span>
+                            <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0066CC', textDecoration: 'none' }}>Link ↗</a>
+                          </div>
+                          <h4 style={{ margin: '0 0 6px', fontSize: 15, lineHeight: 1.35, fontWeight: 700, color: '#111' }}>{article.rewrittenTitle}</h4>
+                          <p style={{ margin: 0, fontSize: 12, color: '#555', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.excerpt}</p>
                         </div>
                       </div>
 

@@ -194,6 +194,26 @@ if (global.__agentRunning === undefined) global.__agentRunning = false;
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+
+    if (searchParams.get('clear') === 'true') {
+      global.__agentQueue = [];
+      const { clearAgentQueue } = await import('@/server/news-agent/scheduler').catch(() => ({ clearAgentQueue: () => {} }));
+      const { clearSeenUrls } = await import('@/server/scraper/dedup').catch(() => ({ clearSeenUrls: () => {} }));
+      if (clearAgentQueue) clearAgentQueue();
+      if (clearSeenUrls) clearSeenUrls();
+      return NextResponse.json({ success: true, message: 'Fila e cache do agente limpos com sucesso.', queue: [] });
+    }
+
+    const removeUrl = searchParams.get('remove');
+    if (removeUrl) {
+      if (global.__agentQueue) {
+        global.__agentQueue = global.__agentQueue.filter(a => a.originalUrl !== removeUrl);
+      }
+      const { removeFromQueue } = await import('@/server/news-agent/scheduler').catch(() => ({ removeFromQueue: () => {} }));
+      if (removeFromQueue) removeFromQueue(removeUrl);
+      return NextResponse.json({ success: true, message: 'Item removido da fila.' });
+    }
+
     if (searchParams.get('reset') === 'true') {
       global.__agentRunning = false;
       const { resetAgentLock } = await import('@/server/news-agent/agent').catch(() => ({ resetAgentLock: () => {} }));
