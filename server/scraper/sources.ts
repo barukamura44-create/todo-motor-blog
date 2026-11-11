@@ -18,21 +18,21 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'veiculos',
     type: 'rss',
-    keywords: ['carro', 'picape', 'suv', 'veículo', 'lançamento', 'teste', 'motor'],
+    keywords: ['carro', 'picape', 'suv', 'veículo', 'veiculo', 'teste', 'motor', 'híbrido', 'elétrico'],
   },
   {
     name: 'Notícias Automotivas Lançamentos',
     url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'lancamentos',
     type: 'rss',
-    keywords: ['lançamento', 'novo', 'carro', 'picape', 'suv', 'brasil', 'preço'],
+    keywords: ['lançamento', 'novo', 'nova geração', 'revelado', 'preço', 'estreia'],
   },
   {
     name: 'Autoesporte',
     url: 'https://autoesporte.globo.com/rss/autoesporte/',
     categorySlug: 'veiculos',
     type: 'rss',
-    keywords: ['carro', 'veículo', 'suv', 'picape', 'lançamento', 'elétrico'],
+    keywords: ['carro', 'veículo', 'veiculo', 'suv', 'picape', 'lançamento', 'elétrico'],
   },
 
   // ─── TRANSPORTES PESADOS ──────────────────────────────────────────────────
@@ -41,48 +41,55 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://www.transportemoderno.com.br/feed/',
     categorySlug: 'transportes-pesados',
     type: 'rss',
-    keywords: ['caminhão', 'frota', 'logística', 'transporte', 'carga', 'semirreboque'],
+    keywords: ['caminhão', 'caminhao', 'frota', 'logística', 'transporte rodoviário', 'carga pesada', 'semirreboque', 'cavalo-mecânico', 'scania', 'volvo trucks', 'mercedes-benz', 'iveco', 'daf'],
   },
 
   // ─── MÁQUINAS AGRÍCOLAS ───────────────────────────────────────────────────
   {
-    name: 'Canal Rural',
+    name: 'Canal Rural Máquinas',
     url: 'https://www.canalrural.com.br/feed/',
     categorySlug: 'agricola',
     type: 'rss',
-    keywords: ['máquina', 'agrícola', 'colheitadeira', 'trator', 'plantadeira', 'pulverizador', 'New Holland', 'John Deere', 'Case', 'campo', 'agro'],
+    keywords: ['máquina agrícola', 'maquina agricola', 'colheitadeira', 'trator', 'plantadeira', 'pulverizador', 'New Holland', 'John Deere', 'Case IH', 'Valtra', 'Massey Ferguson', 'mecanização agrícola', 'implemento'],
   },
   {
     name: 'AgroLink',
     url: 'https://www.agrolink.com.br/rss/noticias.aspx',
     categorySlug: 'agricola',
     type: 'rss',
-    keywords: ['trator', 'máquina agrícola', 'colheita', 'equipamento', 'implemento', 'agronegócio'],
+    keywords: ['trator', 'máquina agrícola', 'maquina agricola', 'colheitadeira', 'pulverizador', 'implemento agrícola', 'mecanização'],
   },
 
-  // ─── TERRAPLENAGEM ────────────────────────────────────────────────────────
+  // ─── TERRAPLENAGEM (Linha Amarela & Obras Pesadas) ────────────────────────
   {
     name: 'Máquinas e Equipamentos',
     url: 'https://www.maquinasemercado.com.br/feed/',
     categorySlug: 'terraplenagem',
     type: 'rss',
-    keywords: ['escavadeira', 'retroescavadeira', 'motoniveladora', 'terraplenagem', 'compactador', 'caterpillar', 'komatsu', 'volvo CE', 'obra'],
+    keywords: ['escavadeira', 'retroescavadeira', 'motoniveladora', 'terraplenagem', 'compactador', 'pá carregadeira', 'pa carregadeira', 'caterpillar', 'komatsu', 'volvo CE', 'linha amarela', 'trator de esteira'],
   },
   {
-    name: 'Canal Rural Infra',
+    name: 'Canal Rural Infra & Máquinas',
     url: 'https://www.canalrural.com.br/feed/',
     categorySlug: 'terraplenagem',
     type: 'rss',
-    keywords: ['máquina', 'equipamento', 'obra', 'estrutura', 'terraplenagem'],
+    keywords: ['máquina de terraplenagem', 'escavadeira hidráulica', 'pá carregadeira', 'motoniveladora', 'linha amarela', 'equipamento pesado de terraplenagem'],
   },
 
   // ─── NÁUTICA / BARCOS / JET SKI ──────────────────────────────────────────
   {
-    name: 'Náutica Online',
+    name: 'Náutica Online Barcos',
     url: 'https://nautica.com.br/feed/',
     categorySlug: 'barcos',
     type: 'rss',
-    keywords: ['lancha', 'barco', 'veleiro', 'iate', 'náutica', 'marinha', 'embarcação', 'jetski', 'moto aquática'],
+    keywords: ['lancha', 'barco', 'veleiro', 'iate', 'náutica', 'marinha', 'embarcação', 'estaleiro', 'boat show', 'marina'],
+  },
+  {
+    name: 'Náutica Online Jet Ski',
+    url: 'https://nautica.com.br/feed/',
+    categorySlug: 'jetski',
+    type: 'rss',
+    keywords: ['jet ski', 'jetski', 'moto aquática', 'moto aquatica', 'sea-doo', 'yamaha waverunner', 'kawasaki jet ski'],
   },
 
   // ─── AERONAVES / DRONES / HELICÓPTEROS ──────────────────────────────────
@@ -91,21 +98,28 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://aeroin.net/feed/',
     categorySlug: 'aeronaves',
     type: 'rss',
-    keywords: ['aeronave', 'avião', 'aviação', 'helicóptero', 'drone', 'embraer', 'boeing', 'airbus', 'piloto'],
+    keywords: ['aeronave', 'avião', 'aviao', 'aviação comercial', 'embraer', 'boeing', 'airbus', 'jato executivo', 'turbina', 'companhia aérea'],
   },
   {
     name: 'Airway Aviação',
     url: 'https://www.airway.com.br/feed/',
+    categorySlug: 'aeronaves',
+    type: 'rss',
+    keywords: ['aviação', 'aeronave', 'avião', 'aviao', 'boeing', 'airbus', 'embraer', 'jato comercial', 'companhia aérea'],
+  },
+  {
+    name: 'Aeroin Helicópteros',
+    url: 'https://aeroin.net/feed/',
     categorySlug: 'helicopteros',
     type: 'rss',
-    keywords: ['aviação', 'aeronave', 'airshow', 'helicóptero', 'drone', 'avião'],
+    keywords: ['helicóptero', 'helicoptero', 'rotorcraft', 'asas rotativas', 'helibras', 'bell helicopter', 'sikorsky', 'leonardo helicopters', 'aeromédico'],
   },
   {
     name: 'Aeroin Drones',
     url: 'https://aeroin.net/feed/',
     categorySlug: 'drones',
     type: 'rss',
-    keywords: ['drone', 'VANT', 'UAS', 'DJI', 'tecnologia', 'aérea', 'aeronave'],
+    keywords: ['drone', 'drones', 'VANT', 'UAS', 'DJI', 'multirrotor', 'eVTOL', 'aeronave não tripulada'],
   },
 
   // ─── EVENTOS / LANÇAMENTOS ──────────────────────────────────────────────
@@ -114,6 +128,6 @@ export const SOURCES: SourceConfig[] = [
     url: 'https://www.noticiasautomotivas.com.br/feed/',
     categorySlug: 'eventos',
     type: 'rss',
-    keywords: ['feira', 'exposição', 'salão', 'evento', 'lançamento', 'apresentação'],
+    keywords: ['feira', 'exposição', 'salão automotivo', 'boat show', 'fenatran', 'agrishow', 'evento automotivo'],
   },
 ];

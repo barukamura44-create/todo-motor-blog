@@ -55,9 +55,19 @@ export function markAsSeen(originalUrl: string): void {
 /**
  * Simple keyword relevance filter.
  * Returns true if the text contains at least one of the provided keywords.
+ * Uses word boundary checking on short keywords to prevent false positive substring matches.
  */
 export function isRelevant(text: string, keywords: string[]): boolean {
   if (!keywords.length) return true;
   const lower = text.toLowerCase();
-  return keywords.some(kw => lower.includes(kw.toLowerCase().trim()));
+  return keywords.some(kw => {
+    const k = kw.toLowerCase().trim();
+    if (!k) return false;
+    // For short single words (<= 5 characters), enforce word boundaries
+    if (/^[a-z0-9áàâãéèêíïóôõöúçñ]+$/i.test(k) && k.length <= 5) {
+      const regex = new RegExp(`(^|[^a-z0-9áàâãéèêíïóôõöúçñ])${k}([^a-z0-9áàâãéèêíïóôõöúçñ]|$)`, 'i');
+      return regex.test(lower);
+    }
+    return lower.includes(k);
+  });
 }

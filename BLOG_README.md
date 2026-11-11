@@ -144,7 +144,7 @@ Para testar o blog:
 - [Guia de Integração com IA](./references/ai-content-generation.md)
 - [Guia de Integração com LLM](./references/llm-integration.md)
 - [Guia de Atualizações Periódicas](./references/periodic-updates.md)
-
+as
 ## 📞 Suporte
 
 Para dúvidas ou sugestões sobre o blog, entre em contato com a equipe do Todo Motor.

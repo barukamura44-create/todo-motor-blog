@@ -14,9 +14,9 @@
 import { parseRssFeed } from '../scraper/rss-parser';
 import { isDuplicate, markAsSeen, isRelevant } from '../scraper/dedup';
 import { SOURCES } from '../scraper/sources';
-import { generateContentFromText } from '../ai-service';
+import { generateContentFromText, extractTextFromHtml } from '../ai-service';
 import { generateReelsScript, reelsScriptToMarkdown } from './reels-script';
-import { generateImageForPost } from './image-selector';
+import { generateImageForPost, extractImageFromHtml } from './image-selector';
 
 function getApiKey(): string {
   return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
@@ -157,7 +157,7 @@ export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
     for (const [categorySlug, sources] of categoryGroups) {
       console.log(`[NewsAgent] → Categoria: ${categorySlug} (${sources.length} fontes)`);
 
-      const candidates: { title: string; content: string; url: string; source: string; score: number }[] = [];
+      const candidates: { title: string; content: string; url: string; source: string; score: number; imageUrl?: string }[] = [];
 
       // Buscar artigos de cada fonte
       for (const source of sources) {
@@ -170,7 +170,7 @@ export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
             const fullText = `${item.title} ${item.description}`;
             if (!isRelevant(fullText, source.keywords)) continue;
 
-            // Pontuar com Gemini 2.5 Flash
+            // Pontuar com Gemini
             const score = await scoreRelevance(item.title, item.description, categorySlug);
             console.log(`[NewsAgent]   Score ${score}/10: "${item.title.substring(0, 50)}"`);
 
@@ -180,6 +180,7 @@ export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
               url: item.link,
               source: source.name,
               score,
+              imageUrl: item.imageUrl,
             });
 
             // Delay para não sobrecarregar a API
@@ -201,11 +202,46 @@ export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
       candidates.sort((a, b) => b.score - a.score);
       const best = candidates[0];
 
+      // Verificação de relevância mínima (elimina matérias fora do tema ou com pontuação muito baixa)
+      if (best.score < 5) {
+        console.log(`[NewsAgent]   ⚠️ Candidato com score insuficiente (${best.score}/10) para ${categorySlug}. Descartado.`);
+        continue;
+      }
+
       console.log(`[NewsAgent]   ✅ Selecionado: "${best.title.substring(0, 60)}" (score: ${best.score})`);
 
       try {
-        // 1. Reescrever com Gemini 2.5 Flash
-        const rewritten = await generateContentFromText(best.content);
+        // Enriquecer com conteúdo completo da página e imagem da matéria original
+        let articleBody = best.content;
+        let detectedImageUrl = best.imageUrl || null;
+
+        if (best.url) {
+          try {
+            const pageRes = await fetch(best.url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 TodoMotorBot/1.0',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              },
+              signal: AbortSignal.timeout(8000),
+            });
+            if (pageRes.ok) {
+              const html = await pageRes.text();
+              const extractedText = extractTextFromHtml(html);
+              if (extractedText && extractedText.length > 250) {
+                articleBody = extractedText;
+              }
+              const ogImg = extractImageFromHtml(html, best.url);
+              if (ogImg) {
+                detectedImageUrl = ogImg;
+              }
+            }
+          } catch {
+            // Continua com o conteúdo do RSS
+          }
+        }
+
+        // 1. Reescrever com Gemini garantindo matéria completa
+        const rewritten = await generateContentFromText(articleBody);
 
         // 2. Gerar roteiro Reels
         const reelsData = await generateReelsScript(
@@ -215,11 +251,13 @@ export async function runAgentCycle(force = false): Promise<AgentCycleResult> {
         );
         const reelsMarkdown = reelsScriptToMarkdown(reelsData);
 
-        // 3. Gerar imagem IA
+        // 3. Selecionar imagem coerente (real original > IA > estoque contextual > categoria)
         const imageUrl = await generateImageForPost(
           rewritten.title,
           reelsData.suggestedImagePrompt,
           categorySlug,
+          best.url,
+          detectedImageUrl || undefined,
         );
 
         markAsSeen(best.url);

@@ -162,6 +162,65 @@ const CATEGORY_STOCK_IMAGES: Record<string, Array<{ id: string; url: string; thu
       title: 'Carreta de Carga Especial',
       author: 'Unsplash'
     }
+  ],
+  'helicopteros': [
+    {
+      id: 'heli-1',
+      url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=400&q=80',
+      title: 'Helicóptero de Transporte e Resgate',
+      author: 'Unsplash'
+    },
+    {
+      id: 'heli-2',
+      url: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=400&q=80',
+      title: 'Helicóptero Comercial e Executivo',
+      author: 'Unsplash'
+    }
+  ],
+  'drones': [
+    {
+      id: 'drone-1',
+      url: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=400&q=80',
+      title: 'Drone Profissional em Voo',
+      author: 'Unsplash'
+    },
+    {
+      id: 'drone-2',
+      url: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=400&q=80',
+      title: 'VANT e Tecnologia Aérea',
+      author: 'Unsplash'
+    }
+  ],
+  'jetski': [
+    {
+      id: 'jetski-1',
+      url: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=400&q=80',
+      title: 'Moto Aquática / Jet Ski em Alta Velocidade',
+      author: 'Unsplash'
+    }
+  ],
+  'eventos': [
+    {
+      id: 'evento-1',
+      url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=400&q=80',
+      title: 'Feira e Exposição Automotiva',
+      author: 'Unsplash'
+    }
+  ],
+  'lancamentos': [
+    {
+      id: 'lanc-1',
+      url: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1600&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=400&q=80',
+      title: 'Novo Lançamento Automotivo',
+      author: 'Unsplash'
+    }
   ]
 };
 
@@ -205,7 +264,10 @@ export async function searchStockImages(
 
   // Se não obteve resultados suficientes, mescla com os itens curados da categoria
   if (results.length < limit) {
-    const curated = CATEGORY_STOCK_IMAGES[normalizedCategory] || CATEGORY_STOCK_IMAGES['veiculos'];
+    const categoryKey = normalizedCategory === 'agricola' ? 'maquinas-agricolas'
+      : normalizedCategory === 'terraplenagem' ? 'terraplanagem'
+      : normalizedCategory;
+    const curated = CATEGORY_STOCK_IMAGES[categoryKey] || CATEGORY_STOCK_IMAGES[normalizedCategory] || CATEGORY_STOCK_IMAGES['veiculos'];
     for (const item of curated) {
       if (!results.some(r => r.url === item.url)) {
         results.push({

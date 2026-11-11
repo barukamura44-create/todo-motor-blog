@@ -18,23 +18,22 @@ const CANDIDATE_MODELS = [
   'gemini-flash-lite-latest',
 ];
 
-const SYSTEM_PROMPT = `Você é um redator brasileiro especializado em notícias do setor de transportes pesados, veículos, máquinas e equipamentos.
-Seu tom é direto, técnico, profissional e apaixonado pelo universo motor.
+export const SYSTEM_PROMPT = `Você é um jornalista sênior e redator brasileiro especializado no setor de transportes pesados, veículos, máquinas industriais, agrícolas e embarcações.
+Seu tom é técnico, informativo, aprofundado, profissional e apaixonado pelo universo motor.
 
-REGRA ABSOLUTA E MANDATÓRIA:
-1. ESCREVA O CONTEÚDO 100% EM PORTUGUÊS DO BRASIL (pt-BR).
-2. SE O TEXTO ORIGINAL ESTIVER EM INGLÊS OU QUALQUER OUTRO IDIOMA, TRADUZA E REESCREVA COMPLETAMENTE EM PORTUGUÊS DO BRASIL.
-3. NUNCA RESPONDA EM INGLÊS. TÍTULO, RESUMO E CORPO DO TEXTO DEVEM SER EXCLUSIVAMENTE EM PORTUGUÊS DO BRASIL.
-4. Mantenha a precisão técnica, os fatos principais e especificações.
-5. Use linguagem clara e acessível para lojistas e compradores do mercado brasileiro.
-6. Mantenha o conteúdo entre 300-500 palavras.
+DIRETRIZES MANDATÓRIAS:
+1. IDIOMA: Escreva 100% em Português do Brasil (pt-BR). Se o original estiver em outro idioma, traduza e adapte completamente.
+2. MATÉRIA COMPLETA: Crie uma matéria jornalística completa e bem estruturada (entre 350 e 600 palavras). NUNCA interrompa o texto pela metade. A matéria deve conter introdução envolvente, desenvolvimento técnico com detalhes e especificações, impacto para o mercado e compradores/operadores brasileiros, e uma conclusão sólida.
+3. TÍTULO: Completo, claro e atrativo (entre 40 e 100 caracteres), sem abreviações incompletas.
+4. RESUMO: Um resumo executivo claro e completo de 2 a 3 frases.
 
-Formato esperado:
-TÍTULO: [Seu título em português do Brasil aqui]
-[Conteúdo reescrito em português do Brasil aqui]
-RESUMO: [Seu resumo em português do Brasil aqui]`;
+FORMATO ESTRUTURADO OBRIGATÓRIO (use rigorosamente estas tags):
+TÍTULO: [Título completo em português do Brasil]
+RESUMO: [Resumo executivo completo de 2 a 3 frases]
+CONTEÚDO:
+[Corpo completo da matéria jornalística em múltiplos parágrafos bem desenvolvidos]`;
 
-interface GeneratedContent {
+export interface GeneratedContent {
   title: string;
   content: string;
   excerpt: string;
@@ -137,32 +136,93 @@ export async function generateContentFromText(
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function parseGeneratedContent(text: string): GeneratedContent {
-  const titleMatch = text.match(/TÍTULO:\s*(.+?)(?:\n|$)/i);
-  const resumoMatch = text.match(/RESUMO:\s*([\s\S]+?)(?:\n\n|$)/i);
+/**
+ * Truncate string at word boundary without cutting words in half.
+ */
+export function truncateAtWordBoundary(str: string, maxLen: number): string {
+  if (!str) return '';
+  const trimmed = str.trim();
+  if (trimmed.length <= maxLen) return trimmed;
 
-  const title = titleMatch ? titleMatch[1].trim() : 'Notícia do Universo Motor';
-  const excerpt = resumoMatch
-    ? resumoMatch[1].trim()
-    : 'Confira esta importante notícia do setor de transportes pesados.';
+  const sub = trimmed.substring(0, maxLen);
+  const lastSpace = sub.lastIndexOf(' ');
+  if (lastSpace > maxLen * 0.6) {
+    return sub.substring(0, lastSpace).replace(/[,;:\-\s]+$/, '') + '...';
+  }
+  return sub.trim().replace(/[,;:\-\s]+$/, '') + '...';
+}
 
-  let content = text
-    .replace(/TÍTULO:\s*.+?(?:\n|$)/i, '')
-    .replace(/RESUMO:\s*[\s\S]+?(?:\n\n|$)/i, '')
-    .trim();
+export function parseGeneratedContent(text: string): GeneratedContent {
+  if (!text) {
+    return {
+      title: 'Notícia do Universo Motor',
+      content: '',
+      excerpt: 'Confira as principais novidades do setor automotivo e máquinas.',
+    };
+  }
 
-  if (content.length < 100) {
+  // 1. Extrair TÍTULO
+  const titleMatch = text.match(/TÍTULO:\s*([^\n\r]+)/i);
+  let title = titleMatch ? titleMatch[1].trim() : '';
+
+  // 2. Extrair RESUMO
+  const resumoMatch = text.match(/RESUMO:\s*([\s\S]*?)(?=(?:\n\s*(?:CONTEÚDO|CONTEUDO):|\n\s*##|\n\s*TÍTULO:|$))/i);
+  let excerpt = resumoMatch ? resumoMatch[1].trim() : '';
+
+  // 3. Extrair CONTEÚDO
+  let content = '';
+  const conteudoMatch = text.match(/(?:CONTEÚDO|CONTEUDO):\s*([\s\S]+)$/i);
+  if (conteudoMatch) {
+    content = conteudoMatch[1].trim();
+  } else {
+    // Fallback caso a tag CONTEÚDO não tenha sido usada explicitamente
+    content = text
+      .replace(/TÍTULO:\s*[^\n\r]+/i, '')
+      .replace(/RESUMO:\s*[\s\S]*?(?=(?:\n\n|\n[A-Z_]+:|$))/i, '')
+      .trim();
+  }
+
+  // Limpeza de marcações markdown no título (ex: aspas, negrito)
+  title = title.replace(/^[*"#`'\s]+|[*"#`'\s]+$/g, '').trim();
+
+  // Fallback se título ficou vazio
+  if (!title || title.length < 5) {
+    const firstLine = text.split('\n').map(l => l.trim()).find(l => l.length > 10 && !l.toUpperCase().startsWith('RESUMO') && !l.toUpperCase().startsWith('CONTE')) || 'Notícia do Universo Motor';
+    title = firstLine.replace(/^[#*-\s]+/, '').trim();
+  }
+
+  // Fallback se conteúdo ficou muito curto
+  if (!content || content.length < 100) {
     content = text;
   }
 
+  // Fallback se resumo ficou vazio
+  if (!excerpt || excerpt.length < 20) {
+    const firstParagraph = content.split(/\n\s*\n/).map(p => p.trim()).find(p => p.length > 40) || content;
+    excerpt = truncateAtWordBoundary(firstParagraph, 280);
+  }
+
+  // Limites seguros para o banco de dados preservando frases e palavras inteiras
+  // posts.title é varchar(255)
+  if (title.length > 250) {
+    title = truncateAtWordBoundary(title, 240);
+  }
+
+  // posts.excerpt é text, mantemos até 500 caracteres sem truncamento abrupto
+  if (excerpt.length > 500) {
+    excerpt = truncateAtWordBoundary(excerpt, 480);
+  }
+
+  // O conteúdo da matéria (posts.content) é campo TEXT (suporta até 65KB).
+  // NÃO truncar em 2000 caracteres para não quebrar a matéria no meio!
   return {
-    title: title.substring(0, 60),
-    content: content.substring(0, 2000),
-    excerpt: excerpt.substring(0, 200),
+    title,
+    content: content.trim(),
+    excerpt,
   };
 }
 
-function extractTextFromHtml(html: string): string {
+export function extractTextFromHtml(html: string): string {
   let text = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');

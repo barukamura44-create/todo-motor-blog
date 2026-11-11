@@ -31,6 +31,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 import path from "path";
+import fs from "fs";
 
 async function startServer() {
   const app = express();
@@ -52,8 +53,9 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "development") {
+  // development mode uses Vite only if source client template exists, otherwise serves static files
+  const clientTemplateExists = fs.existsSync(path.resolve(import.meta.dirname, "../..", "client", "index.html"));
+  if (process.env.NODE_ENV === "development" && clientTemplateExists) {
     await setupVite(app, server);
   } else {
     serveStatic(app);

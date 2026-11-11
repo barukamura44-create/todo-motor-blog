@@ -10,6 +10,7 @@ export interface RssItem {
   description: string;
   pubDate?: string;
   content?: string;
+  imageUrl?: string;
 }
 
 export interface ParsedFeed {
@@ -75,6 +76,33 @@ function decodeEntities(str: string): string {
     .trim();
 }
 
+export function extractImageUrlFromXml(itemXml: string): string | undefined {
+  // 1. <enclosure ... url="..." ... />
+  const enclosureMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image\/[^"']+["']/i)
+    || itemXml.match(/<enclosure[^>]+type=["']image\/[^"']+["'][^>]*url=["']([^"']+)["']/i)
+    || itemXml.match(/<enclosure[^>]+url=["'](https?:\/\/[^"']+\.(?:jpe?g|png|webp|avif)(?:\?[^"']*)?)["']/i);
+  if (enclosureMatch?.[1]) return enclosureMatch[1].trim();
+
+  // 2. <media:content url="..." /> or <media:thumbnail url="..." />
+  const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
+  if (mediaMatch?.[1]) return mediaMatch[1].trim();
+
+  // 3. <itunes:image href="..." />
+  const itunesMatch = itemXml.match(/<itunes:image[^>]+href=["']([^"']+)["']/i);
+  if (itunesMatch?.[1]) return itunesMatch[1].trim();
+
+  // 4. <link rel="enclosure" href="..." />
+  const linkEnclosureMatch = itemXml.match(/<link[^>]+rel=["']enclosure["'][^>]+href=["']([^"']+)["']/i)
+    || itemXml.match(/<link[^>]+type=["']image\/[^"']+["'][^>]+href=["']([^"']+)["']/i);
+  if (linkEnclosureMatch?.[1]) return linkEnclosureMatch[1].trim();
+
+  // 5. <img> tag in description or content:encoded
+  const imgMatch = itemXml.match(/<img[^>]+src=["'](https?:\/\/[^"']+\.(?:jpe?g|png|webp|avif)(?:\?[^"']*)?)["']/i);
+  if (imgMatch?.[1]) return imgMatch[1].trim();
+
+  return undefined;
+}
+
 function parseRss(xml: string, maxItems: number): ParsedFeed {
   const channelMatch = xml.match(/<channel[^>]*>([\s\S]*?)<\/channel>/i);
   const channelXml = channelMatch ? channelMatch[1] : xml;
@@ -93,8 +121,9 @@ function parseRss(xml: string, maxItems: number): ParsedFeed {
       extractTag(itemXml, 'description')
     );
     const pubDate = extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'dc:date');
+    const imageUrl = extractImageUrlFromXml(itemXml);
 
-    return { title, link, description, pubDate };
+    return { title, link, description, pubDate, imageUrl };
   }).filter(item => item.title && item.link);
 
   return { title: feedTitle || 'Sem título', items };
@@ -119,8 +148,9 @@ function parseAtom(xml: string, maxItems: number): ParsedFeed {
       extractTag(entryXml, 'summary')
     );
     const pubDate = extractTag(entryXml, 'published') || extractTag(entryXml, 'updated');
+    const imageUrl = extractImageUrlFromXml(entryXml);
 
-    return { title, link, description, pubDate };
+    return { title, link, description, pubDate, imageUrl };
   }).filter(item => item.title && item.link);
 
   return { title: feedTitle || 'Sem título', items };
