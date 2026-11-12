@@ -84,7 +84,7 @@ Confira a matéria completa com especificações e fotos no blog Todo Motor! Lin
 
 #GWM #HavalH7 #SUVHibrido #CarrosFlex #TodoMotor #Veiculos`,
     twitterText: `🚗⚡ GWM inicia pré-venda do novo Haval H7 no Brasil! SUV híbrido plug-in flex entrega 393 cv, tração integral e +1.000 km de autonomia. Leia os detalhes no blog Todo Motor: todoMotor.com.br #GWM #HavalH7 #TodoMotor`,
-    suggestedImageUrl: '/category-veiculos.jpg',
+    suggestedImageUrl: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
     hashtags: ['#GWM', '#HavalH7', '#SUVHibrido', '#TodoMotor', '#Veiculos'],
   },
   {
@@ -137,7 +137,7 @@ Matéria completa no blog Todo Motor. Acesse todoMotor.com.br! 🔗
 
 #Agro #MaquinasAgricolas #NewHolland #Trator #Colheitadeira #TodoMotor`,
     twitterText: `🌾 New Holland lança colheitadeira T6 com IA integrada no Brasil! Redução de 15% no consumo de diesel e ajuste automático no campo. Leia no blog: todoMotor.com.br #Agro #TodoMotor`,
-    suggestedImageUrl: '/category-agricola.jpg',
+    suggestedImageUrl: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1200&q=80',
     hashtags: ['#Agro', '#MaquinasAgricolas', '#NewHolland', '#TodoMotor'],
   },
   {
@@ -183,7 +183,7 @@ Confira todos os detalhes no blog Todo Motor 🔗 todoMotor.com.br
 
 #Nautica #Lanchas #Barcos #Iates #TodoMotor #Navegacao`,
     twitterText: `⛵ Mercado náutico cresce 34% no Brasil com destaque para lanchas de 28 a 40 pés! Leia a matéria no blog Todo Motor: todoMotor.com.br #Nautica #Barcos #TodoMotor`,
-    suggestedImageUrl: '/category-barcos.jpg',
+    suggestedImageUrl: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1200&q=80',
     hashtags: ['#Nautica', '#Barcos', '#Lanchas', '#TodoMotor'],
   },
 ];

@@ -111,15 +111,27 @@ export const DEMO_POSTS = [
     title: 'New Holland lança nova colheitadeira T6 com câmbio automático revolucionário',
     slug: 'new-holland-t6-cambio',
     excerpt: 'Fabricante apresenta tecnologia exclusiva que aumenta produtividade em até 22% em condições adversas.',
-    content: `A New Holland Agriculture acaba de revelar a nova colheitadeira série T6, equipada com um câmbio automático de 24 marchas desenvolvido exclusivamente para o mercado brasileiro. O lançamento aconteceu durante a Agrishow em Ribeirão Preto, SP.\n\n## Tecnologia que transforma o campo\n\nO sistema CVT adaptado para condições brasileiras permite que o operador mantenha a velocidade ideal de colheita. Em testes no Mato Grosso, a produtividade aumentou 22%.`,
-    coverImage: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80',
+    content: `A New Holland Agriculture acaba de revelar a nova colheitadeira série T6, equipada com um câmbio automático de 24 marchas desenvolvido exclusivamente para o mercado brasileiro. O anúncio oficial ocorreu durante a Agrishow, em Ribeirão Preto (SP), reunindo os principais produtores de grãos e especialistas do agronegócio nacional.
+
+## Tecnologia que Transforma o Rendimento no Campo
+
+O novo sistema de transmissão continuamente variável (CVT) adaptado às condições do solo brasileiro permite que o operador mantenha a rotação ideal do motor mesmo sob grande oscilação de declividade e densidade de cultura. Em testes rigorosos conduzidos no norte do Mato Grosso e no sudoeste de Goiás, a colheitadeira apresentou um ganho médio de produtividade de 22% por hectare, reduzindo significativamente as perdas de grãos durante o despalhe.
+
+## Eficiência Operacional e Telemetria Conectada
+
+Além do inovador conjunto de transmissão, a máquina conta com o sistema inteligente de telemetria PLM Connect. Sensores infravermelhos integrados no canal alimentador analisam em tempo real a umidade e a qualidade do grão a cada dois segundos. Com base nessas leituras instantâneas, os cilindros e côncavos são regulados automaticamente, dispensando intervenção manual exaustiva do condutor e proporcionando uma economia de óleo diesel superior a 14% ao longo do dia de trabalho.
+
+## Cabine Ergonômica e Conectividade Total
+
+A cabine de comando da nova T6 foi redesenhada com foco em ergonomia e conforto durante longas jornadas de colheita noturna. Equipada com display touch de alta definição de 12 polegadas, suspensão pneumática de múltiplos estágios e conexão direta via satélite com centros de suporte ao concessionário, a linha garante disponibilidade máxima nos momentos cruciais da safra brasileira.`,
+    coverImage: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1200&q=80',
     categoryId: 4,
     status: 'published' as const,
     publishedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
     authorId: 1,
-    tags: 'New Holland,colheitadeira,agrícola',
+    tags: 'New Holland,colheitadeira,agrícola,Agrishow,maquinário',
     sourceUrl: null,
   },
   {
@@ -127,15 +139,27 @@ export const DEMO_POSTS = [
     title: 'Scania apresenta novo caminhão elétrico pesado de 560 CV para transporte rodoviário',
     slug: 'scania-eletrico-560cv',
     excerpt: 'Veículo sustentável promete autonomia de 500 km com carga rápida de 45 minutos.',
-    content: 'A Scania iniciou os testes do seu novo modelo elétrico rodoviário pesado para transporte de cargas em rodovias.',
-    coverImage: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+    content: `A Scania iniciou no Brasil a fase de homologação e testes operacionais do seu novo caminhão elétrico rodoviário pesado de 560 CV. Desenvolvido para atuar nas principais rotas logísticas intermunicipais do país, o modelo marca uma transição histórica para o transporte pesado de cargas com emissão zero de carbono e eficiência energética superior.
+
+## Desempenho e Trem de Força Elétrico
+
+Equipado com três motores elétricos síncronos de ímãs permanentes que entregam 560 CV de potência contínua e impressionantes 2.800 Nm de torque imediato desde a arrancada, o caminhão da Scania supera veículos a diesel tradicionais em retomadas e arrancadas em aclives acentuados. A transmissão automatizada de 6 velocidades foi especialmente concebida para gerenciar com precisão a entrega de torque nas rodas motrizes sob carga máxima de até 40 toneladas de peso bruto total.
+
+## Autonomia Estendida e Recarga Ultrarrápida
+
+O pacote de baterias de íons de lítio com tecnologia LFP conta com capacidade de 624 kWh, assegurando uma autonomia real de até 500 km em velocidade de cruzeiro rodoviário. O sistema suporta recargas ultra-rápidas em corrente contínua (CCS2) de até 375 kW, possibilitando recuperar de 20% a 80% da carga em apenas 45 minutos — exatamente o tempo de descanso regulamentar obrigatório para os motoristas profissionais nas paradas rodoviárias.
+
+## Menor Custo Total de Propriedade (TCO)
+
+De acordo com estudos preliminares com grandes transportadoras nos corredores entre Campinas, Santos e Curitiba, o custo por quilômetro rodado foi reduzido em até 48% quando comparado aos motores diesel Euro 6 equivalentes. A drástica redução no número de peças móveis no conjunto mecânico também prolonga os intervalos de revisão preventiva em mais de 60%, consolidando a eletrificação como alternativa viável para a logística brasileira.`,
+    coverImage: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=80',
     categoryId: 6,
     status: 'published' as const,
     publishedAt: new Date(Date.now() - 86400000),
     createdAt: new Date(Date.now() - 86400000),
     updatedAt: new Date(Date.now() - 86400000),
     authorId: 1,
-    tags: 'Scania,caminhão elétrico,transportes',
+    tags: 'Scania,caminhão elétrico,transportes,logística,rodoviário',
     sourceUrl: null,
   },
   {
@@ -143,15 +167,27 @@ export const DEMO_POSTS = [
     title: 'Azimut Yachts lança nova lancha de 62 pés produzida no Brasil',
     slug: 'azimut-62-brasil',
     excerpt: 'Estaleiro italiano investe no mercado náutico brasileiro com modelo de luxo exclusivo.',
-    content: 'A Azimut Yachts oficializou o lançamento da nova Azimut 62 no estaleiro de Itajaí (SC).',
-    coverImage: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80',
+    content: `A fabricante italiana Azimut Yachts oficializou o lançamento comercial da nova Azimut 62 produzida no seu estaleiro náutico em Itajaí (SC). Desenvolvida sob medida para atender a crescente demanda brasileira por embarcações de lazer com sofisticação de alto padrão, a lancha une design contemporâneo europeu à versatilidade que o litoral e as represas nacionais exigem.
+
+## Design Assinado e Arquitetura Naval
+
+O design exterior da embarcação traz as linhas elegantes e janelas panorâmicas contínuas assinadas pelo renomado estúdio Stefano Righini. O casco de geometria em V profundo foi laminado a vácuo com fibra de vidro estrutural e reforços de fibra de carbono na superestrutura, reduzindo o centro de gravidade e proporcionando navegabilidade suave mesmo em condições marítimas adversas na costa brasileira.
+
+## Conforto a Bordo e Espaços Gourmet
+
+A bordo, a Azimut 62 dispõe de três amplas cabines com suítes privativas, incluindo uma suíte master à meia-nau com cama king size, closet e janelas amplas com vista direta para a linha d'água. Na popa, a generosa plataforma de banho submersível hidráulica se integra à área gourmet com churrasqueira embutida, refrigerador de vinhos e amplo sofá com mesa em teca maciça, compondo o ambiente ideal para recepções e passeios em família.
+
+## Motorização e Eficiência Náutica
+
+A propulsão é garantida por dois motores Volvo Penta D13 de 900 HP com rabetas de alta performance ou sistema de pods IPS, alcançando velocidade de cruzeiro de 26 nós e velocidade máxima superior a 32 nós. O posto de pilotagem é dotado de telas sensíveis ao toque com sistema de navegação Raymarine, piloto automático com correção de correnteza e joystick de manobra que simplifica a atracação em qualquer marina.`,
+    coverImage: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1200&q=80',
     categoryId: 2,
     status: 'published' as const,
     publishedAt: new Date(Date.now() - 172800000),
     createdAt: new Date(Date.now() - 172800000),
     updatedAt: new Date(Date.now() - 172800000),
     authorId: 1,
-    tags: 'Azimut,lancha,náutica,barcos',
+    tags: 'Azimut,lancha,náutica,barcos,iates,marina',
     sourceUrl: null,
   },
   {
@@ -159,15 +195,27 @@ export const DEMO_POSTS = [
     title: 'Caterpillar anuncia escavadeira hidráulica Next Gen com inteligência de peso',
     slug: 'cat-next-gen-escavadeira',
     excerpt: 'Nova linha Cat 320 reduz custos operacionais em 20% e traz sistema payload integrado.',
-    content: 'A Caterpillar trouxe para o Brasil a última geração da escavadeira hidráulica Cat 320.',
-    coverImage: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=800&q=80',
+    content: `A Caterpillar apresentou ao mercado da construção e mineração brasileira a nova geração da escavadeira hidráulica Cat 320 Next Gen. Projetada para transformar os canteiros de obras de grande porte e operações de terraplenagem pesada, o equipamento incorpora tecnologia digital de fábrica que eleva a eficiência operacional a níveis inéditos.
+
+## Balança Embarcada Cat Payload
+
+O principal diferencial da Cat 320 é o sistema de pesagem dinâmica Cat Payload integrado de fábrica aos sensores hidráulicos da lança e da caçamba. O operador pode verificar em tempo real na tela da cabine o peso exato de cada carga útil carregada nos caminhões basculantes, eliminando sobrecargas perigosas ou viagens com capacidade ociosa. Essa funcionalidade exclusiva reduz o tempo de ciclo em até 15% e previne multas rodoviárias por excesso de peso.
+
+## Assistente 2D e Sistema E-Fence de Segurança
+
+A escavadeira conta ainda com o Cat Grade com tecnologia 2D, que projeta as cotas de corte e aterro diretamente na visão do operador, permitindo atingir o nível exato do solo na primeira passada, sem necessidade de estaqueamento topográfico manual. Paralelamente, o sistema de segurança E-Fence estabelece barreiras virtuais programáveis no teto, solo e laterais, impedindo que a caçamba atinja cabos elétricos aéreos ou obstáculos no perímetro da escavação.
+
+## Eficiência Hidráulica e Menor Consumo
+
+O trem de força é acionado pelo motor Cat C4.4 ACERT com injeção eletrônica de combustível e bomba hidráulica de vazão controlada por demanda eletrônica. Em comparação aos modelos da geração anterior, a nova Cat 320 consome até 20% menos diesel por metro cúbico escavado, enquanto os novos filtros eletrostáticos estendem o intervalo de troca de óleo hidráulico para até 3.000 horas de serviço contínuo.`,
+    coverImage: 'https://images.unsplash.com/photo-1579829366248-204fe8413f31?auto=format&fit=crop&w=1200&q=80',
     categoryId: 5,
     status: 'published' as const,
     publishedAt: new Date(Date.now() - 259200000),
     createdAt: new Date(Date.now() - 259200000),
     updatedAt: new Date(Date.now() - 259200000),
     authorId: 1,
-    tags: 'Caterpillar,terraplenagem,escavadeira',
+    tags: 'Caterpillar,terraplenagem,escavadeira,construção,obras',
     sourceUrl: null,
   },
   {
@@ -175,15 +223,27 @@ export const DEMO_POSTS = [
     title: 'Toyota Hilux 2026 recebe versão híbrida leve com maior torque e economia',
     slug: 'toyota-hilux-2026-hibrida',
     excerpt: 'Picape mais vendida do país adota auxílio elétrico de 48V para rodar mais km por litro.',
-    content: 'A Toyota confirmou a chegada da nova linha Hilux 2026 com tecnologia micro-híbrida de 48V.',
-    coverImage: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
+    content: `A Toyota do Brasil confirmou a chegada da linha Hilux 2026 equipada com a nova tecnologia híbrida leve de 48V (Mild Hybrid). Líder absoluta no segmento de picapes médias no país há mais de duas décadas, a picape japonesa ganha fôlego renovado combinando a comprovada robustez do chassi sobre longarinas a um trem de força eletrificado altamente eficiente.
+
+## Conjunto Mecânico 2.8 Turbodiesel + 48V
+
+Sob o capô, o motor 2.8 turbodiesel de quatro cilindros recebe um motor-gerador elétrico compacto acoplado por correia e uma bateria de íons de lítio de 48 volts instalada sob os bancos traseiros. O sistema elétrico fornece um boost instantâneo de até 16 CV e 6,6 kgfm de torque adicional durante as acelerações e saídas de inércia, reduzindo o tempo de resposta do acelerador e suavizando as passagens do câmbio automático de 6 marchas.
+
+## Consumo Reduzido e Sistema Start-Stop Impecável
+
+Graças ao auxílio elétrico e à regeneração de energia durante as frenagens, a Hilux Híbrida 48V entrega uma redução de até 10% no consumo de combustível nos trechos urbanos congestionados. Além disso, o sistema de parada e partida automática Start-Stop opera de maneira quase imperceptível, com religamento suave do motor diesel que elimina ruídos e vibrações que costumavam incomodar no uso diário.
+
+## Capacidade Off-Road Preservada
+
+Os engenheiros da Toyota asseguram que todas as características lendárias de trabalho pesado e capacidade off-road foram mantidas integralmente: a picape suporta carga útil superior a 1 tonelada na caçamba, capacidade de reboque com freio de até 3,5 toneladas e tração 4x4 com reduzida e bloqueio do diferencial traseiro. Os componentes elétricos contam com isolamento hidrofóbico completo, preservando a capacidade de transposição de trechos alagados de até 700 mm.`,
+    coverImage: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
     categoryId: 1,
     status: 'published' as const,
     publishedAt: new Date(Date.now() - 345600000),
     createdAt: new Date(Date.now() - 345600000),
     updatedAt: new Date(Date.now() - 345600000),
     authorId: 1,
-    tags: 'Toyota,Hilux,picape,veículos',
+    tags: 'Toyota,Hilux,picape,veículos,4x4,híbrida',
     sourceUrl: null,
   },
   {
@@ -191,15 +251,27 @@ export const DEMO_POSTS = [
     title: 'Embraer apresenta jatinho executivo Phenom 300E com novas tecnologias de cabine',
     slug: 'embraer-phenom-300e-2026',
     excerpt: 'Jato executivo mais vendido da categoria ganha aviônicos avançados e internet via satélite.',
-    content: 'A Embraer Aviação Executiva divulgou as atualizações da linha Phenom 300E para 2026.',
-    coverImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80',
+    content: `A Embraer Aviação Executiva divulgou a nova linha do jato Phenom 300E, aeronave que lidera as entregas mundiais da categoria light jet por doze anos consecutivos. A nova versão traz aprimoramentos significativos em conectividade de banda larga, conforto acústico de cabine e os mais modernos recursos de segurança aeronáutica disponíveis na aviação privada global.
+
+## Aviônicos Avançados e Segurança Preditiva
+
+O cockpit da nova versão é baseado na plataforma de aviônica Garmin Prodigy Touch, incorporando a última atualização do Sistema de Alerta e Prevenção de Saída de Pista (ROAAS), tecnologia patenteada pela Embraer que atua ativamente para orientar a tripulação durante pousos em pistas curtas ou com acúmulo de água. O jato também dispõe de proteção contra tesouras de vento (windshear preditivo) e modo de descida de emergência totalmente automatizado.
+
+## Velocidade de Mach 0.80 e Alcance Continental
+
+Equipado com dois motores turbofan Pratt & Whitney Canada PW535E1 com controle FADEC digital duplo, o Phenom 300E é o jato monopiloto mais rápido e com maior alcance em produção no mundo. Capaz de voar a Mach 0.80 (cerca de 833 km/h de cruzeiro) com teto operacional de 45.000 pés, a aeronave tem alcance de até 3.723 km (2.010 milhas náuticas), permitindo voos sem escalas entre São Paulo e Manaus ou de Brasília até Buenos Aires com folga confortável de reserva de combustível.
+
+## Interior Bossa Nova com Conexão Starlink
+
+No interior da cabine de passageiros com design exclusivo "Bossa Nova", os ocupantes desfrutam da menor altitude de cabine da categoria (apenas 6.600 pés no teto de voo), o que reduz sensivelmente a fadiga em viagens longas. O jato passa a contar de série com sistema de antena de satélite Starlink em fase plana acoplada à fuselagem, oferecendo internet de alta velocidade com mais de 220 Mbps para streaming e videoconferências estáveis durante todo o voo.`,
+    coverImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80',
     categoryId: 3,
     status: 'published' as const,
     publishedAt: new Date(Date.now() - 432000000),
     createdAt: new Date(Date.now() - 432000000),
     updatedAt: new Date(Date.now() - 432000000),
     authorId: 1,
-    tags: 'Embraer,Phenom,aeronaves,jatinho',
+    tags: 'Embraer,Phenom,aeronaves,jatinho,aviação executiva',
     sourceUrl: null,
   }
 ];
